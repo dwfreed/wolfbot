@@ -1,4 +1,9 @@
 # Use glob syntax
 syntax: glob
 *.o
+*.a
+*.swp
 wolfgame
+cscope.out
+*.so
+*.i

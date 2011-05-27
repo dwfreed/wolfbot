@@ -2,15 +2,15 @@
 PROG = wolfgame
 
 # All of the C files we'll need go here, but with a .o extension
-OBJS = main.o callbacks.o threaded_functions.o game.o
+OBJS = main.o callbacks.o threaded_functions.o game.o util.o
 
-LIBS = glib-2.0 gthread-2.0 libcurl
+LIBS = glib-2.0 gthread-2.0
 
-CC = gcc -pthread -ggdb -Wall -Werror
+CC = gcc -ggdb -Wall -Werror -O3
 CFLAGS = -I${PWD}/libircclient/include $(shell pkg-config --cflags ${LIBS})
-LDFLAGS = -L${PWD}/libircclient/lib $(shell pkg-config --libs ${LIBS}) -lircclient
+LDFLAGS = -L${PWD}/libircclient/lib $(shell pkg-config --libs ${LIBS}) -lircclient -lrt -lm -ldl
 
-${PROG}: ${OBJS} libircclient/lib/libircclient.a Makefile
+${PROG}: ${OBJS} libircclient/lib/libircclient.a config.so
 	${CC} -o ${PROG} ${OBJS} ${LDFLAGS}
 
 %.o: %.c Makefile global.h
@@ -28,4 +28,10 @@ libircclient/lib/libircclient.a:
 
 global.h: callbacks.h threaded_functions.h game.h libircclient/lib/libircclient.a
 
-.PHONY: run clean
+%.so: %.c Makefile
+	${CC} -shared -nostartfiles $< -o $@
+
+leakcheck: ${PROG}
+	G_SLICE=always-malloc valgrind --leak-check=full --track-fds=yes --show-reachable=yes --track-origins=yes ./${PROG}
+
+.PHONY: run clean leakcheck
