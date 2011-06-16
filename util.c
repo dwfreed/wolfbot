@@ -15,18 +15,36 @@ char *tilde_expansion(char *path){
 	return new_path;
 }
 
-void *die(void *args __attribute__((__unused__))){
+void *die(void *args){
+	irc_session_t *session = (irc_session_t *)args;
+	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
+	irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "Die, die, die!");
+	context->restart = FALSE;
+	kill(getpid(), SIGRTMIN);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
-void *restart(void *args __attribute__((__unused__))){
+void *restart(void *args){
+	irc_session_t *session = (irc_session_t *)args;
+	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
+	irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "Preparing to restart");
+	context->restart = TRUE;
+	kill(getpid(), SIGRTMIN);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
 void *upgrade(void *args __attribute__((__unused__))){
+	irc_session_t *session = (irc_session_t *)args;
+	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
 void *rehash(void *args __attribute__((__unused__))){
+	irc_session_t *session = (irc_session_t *)args;
+	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }

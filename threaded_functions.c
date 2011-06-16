@@ -2,15 +2,20 @@
 
 void *threaded_channel(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
+	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	char **message_parts = g_strsplit(struct_args->params[1], " ", 0);
 	if( !strcmp(message_parts[0], ".die") ){
-		
+		void (*check_auth_fcn)(irc_session_t *, char *, char *) = (void (*)(irc_session_t *, char *, char *))dlsym(context->auth_library, "check_auth");
+		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
 	} else if( !strcmp(message_parts[0], ".restart") ){
-		
+		void (*check_auth_fcn)(irc_session_t *, char *, char *) = (void (*)(irc_session_t *, char *, char *))dlsym(context->auth_library, "check_auth");
+		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
 	} else if( !strcmp(message_parts[0], ".upgrade") ){
-		
+		void (*check_auth_fcn)(irc_session_t *, char *, char *) = (void (*)(irc_session_t *, char *, char *))dlsym(context->auth_library, "check_auth");
+		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
 	} else if( !strcmp(message_parts[0], ".rehash") ){
-
+		void (*check_auth_fcn)(irc_session_t *, char *, char *) = (void (*)(irc_session_t *, char *, char *))dlsym(context->auth_library, "check_auth");
+		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
 	}
 	g_strfreev(message_parts);
 	free(struct_args->origin);
@@ -20,6 +25,7 @@ void *threaded_channel(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
@@ -29,6 +35,7 @@ void *threaded_connect(void *args){
 	irc_cmd_user_mode(struct_args->session, config_get_string(context->config, "bot.user_mode"));
 	irc_cmd_join(struct_args->session, config_get_string(context->config, "bot.channel.channel"), NULL);
 	free(struct_args);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
@@ -47,11 +54,13 @@ void *threaded_join(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
 void *threaded_kick(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
+	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	
 	free(struct_args->origin);
 	unsigned int i = 0;
@@ -60,11 +69,13 @@ void *threaded_kick(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
 void *threaded_nick(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
+	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	
 	free(struct_args->origin);
 	unsigned int i = 0;
@@ -73,6 +84,7 @@ void *threaded_nick(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
@@ -88,6 +100,7 @@ void *threaded_notice(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
@@ -103,14 +116,17 @@ void *threaded_numeric(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
 void *threaded_part(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
+	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	
 	free(struct_args->origin);
 	free(struct_args);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
@@ -128,13 +144,16 @@ void *threaded_privmsg(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }
 
 void *threaded_quit(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
+	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	
 	free(struct_args->origin);
 	free(struct_args);
+	(void)g_atomic_int_dec_and_test(&context->thread_count);
 	return NULL;
 }

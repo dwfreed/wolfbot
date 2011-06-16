@@ -49,33 +49,33 @@ static void call_command(void *data, void *user_data){
 				g_atomic_int_inc(&context->thread_count);
 				if( !strcmp(command, "die") ){
 					pthread_t thread_id;
-					if( pthread_create(&thread_id, NULL, die, NULL) ){
+					if( pthread_create(&thread_id, NULL, die, session) ){
 						fprintf(stderr, "Failed to thread die, calling direct!\n");
-						die(NULL);
+						die(session);
 					} else {
 						pthread_detach(thread_id);
 					}
 				} else if( !strcmp(command, "restart") ){
 					pthread_t thread_id;
-					if( pthread_create(&thread_id, NULL, restart, NULL) ){
+					if( pthread_create(&thread_id, NULL, restart, session) ){
 						fprintf(stderr, "Failed to thread restart, calling direct!\n");
-						restart(NULL);
+						restart(session);
 					} else {
 						pthread_detach(thread_id);
 					}
 				} else if( !strcmp(command, "upgrade") ){
 					pthread_t thread_id;
-					if( pthread_create(&thread_id, NULL, upgrade, NULL) ){
+					if( pthread_create(&thread_id, NULL, upgrade, session) ){
 						fprintf(stderr, "Failed to thread upgrade, calling direct!\n");
-						upgrade(NULL);
+						upgrade(session);
 					} else {
 						pthread_detach(thread_id);
 					}
 				} else if( !strcmp(command, "rehash") ){
 					pthread_t thread_id;
-					if( pthread_create(&thread_id, NULL, rehash, NULL) ){
+					if( pthread_create(&thread_id, NULL, rehash, session) ){
 						fprintf(stderr, "Failed to thread rehash, calling direct!\n");
-						rehash(NULL);
+						rehash(session);
 					} else {
 						pthread_detach(thread_id);
 					}

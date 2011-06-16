@@ -39,7 +39,7 @@ void signal_handler(int signal){
 		signal_timer_event.sigev_notify = SIGEV_SIGNAL;
 		signal_timer_event.sigev_signo = signal;
 		timer_create(CLOCK_REALTIME, &signal_timer_event, &signal_timer);
-		struct itimerspec timer_time = { {0, 0}, {1, 0} };
+		struct itimerspec timer_time = { {0, 0}, {5, 0} };
 		timer_settime(signal_timer, 0, &timer_time, NULL);
 	}
 }
@@ -87,6 +87,7 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	callbacks->event_quit = event_quit;
 	session = irc_create_session(callbacks);
 	free(callbacks);
+	irc_option_set(session, LIBIRC_OPTION_STRIPNICKS);
 	g_thread_init(NULL);
 	struct irc_ctx_t *context = (struct irc_ctx_t *)calloc(1, sizeof(struct irc_ctx_t));
 	context->config = g_hash_table_new_full(g_str_hash, g_str_equal, free, config_free);

@@ -8,7 +8,7 @@ LIBS = glib-2.0 gthread-2.0 libconfig
 
 CC = gcc -ggdb -Wall -Werror
 CFLAGS = -I${PWD}/include -DWOLFBOT_VERSION='"$(shell hg id -n)"' $(shell pkg-config --cflags ${LIBS})
-LDFLAGS = -L${PWD}/lib $(shell pkg-config --libs ${LIBS}) -lircclient -lm -ldl
+LDFLAGS = -L${PWD}/lib $(shell pkg-config --libs ${LIBS}) -lircclient -lm -ldl -rdynamic
 
 all: ${PROG} auth
 
