@@ -3,7 +3,11 @@ syntax: glob
 *.o
 *.a
 *.swp
-wolfgame
+wolfbot
 cscope.out
 *.so
 *.i
+*core*
+qa.log
+include
+lib

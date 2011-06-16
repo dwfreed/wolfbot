@@ -330,7 +330,9 @@ static void libirc_dcc_process_descriptors (irc_session_t * ircsession, fd_set *
 
 						if ( dcc->incoming_offset == 4 )
 						{
-							unsigned int received_size = ntohl (*((unsigned int*)dcc->incoming_buf));
+							unsigned int received_size;
+							memcpy(&received_size, dcc->incoming_buf, sizeof(unsigned int));
+							received_size = ntohl (received_size);
 
 							// Sent size confirmed
 							if ( dcc->file_confirm_offset == received_size )
@@ -366,7 +368,8 @@ static void libirc_dcc_process_descriptors (irc_session_t * ircsession, fd_set *
                              {
                              	dcc->state = LIBIRC_STATE_CONFIRM_SIZE;
                              	dcc->file_confirm_offset += offset;
-                             	*((unsigned int*)dcc->outgoing_buf) = htonl (dcc->file_confirm_offset);
+				unsigned int sent_size = htonl(dcc->file_confirm_offset); 
+				memcpy(dcc->outgoing_buf, &sent_size, sizeof(unsigned int));
                              	dcc->outgoing_offset = 4;
 							}
 						}
@@ -522,16 +525,25 @@ static int libirc_new_dcc_session (irc_session_t * session, unsigned long ip, un
 
 	if ( !ip )
 	{
+#ifdef ENABLE_IPV6
+		struct sockaddr_in6 saddr;
+#else
 		struct sockaddr_in saddr;
+#endif
 		unsigned long arg = 1;
 
 		setsockopt (dcc->sock, SOL_SOCKET, SO_REUSEADDR, (char*)&arg, sizeof(arg));
 
 		memset (&saddr, 0, sizeof(saddr));
+#ifdef ENABLE_IPV6
+		saddr.sin6_family = AF_INET6;
+		memcpy (&saddr.sin6_addr, &session->local_addr, sizeof(session->local_addr));
+		saddr.sin6_port = htons (0);
+#else
 		saddr.sin_family = AF_INET;
 		memcpy (&saddr.sin_addr, &session->local_addr, sizeof(session->local_addr));
-        saddr.sin_port = htons (0);
-
+		saddr.sin_port = htons (0);
+#endif
 		if ( bind (dcc->sock, (struct sockaddr *) &saddr, sizeof(saddr)) < 0 )
 			goto cleanup_exit_error;
 

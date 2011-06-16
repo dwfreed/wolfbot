@@ -1,37 +1,51 @@
 # Name of the binary
-PROG = wolfgame
+PROG = wolfbot
 
 # All of the C files we'll need go here, but with a .o extension
-OBJS = main.o callbacks.o threaded_functions.o game.o util.o
+OBJS = callbacks.o threaded_functions.o game.o util.o conf.o main.o
 
-LIBS = glib-2.0 gthread-2.0
+LIBS = glib-2.0 gthread-2.0 libconfig
 
-CC = gcc -ggdb -Wall -Werror -O3
-CFLAGS = -I${PWD}/libircclient/include $(shell pkg-config --cflags ${LIBS})
-LDFLAGS = -L${PWD}/libircclient/lib $(shell pkg-config --libs ${LIBS}) -lircclient -lrt -lm -ldl
+CC = gcc -ggdb -Wall -Werror
+CFLAGS = -I${PWD}/include -DWOLFBOT_VERSION='"$(shell hg id -n)"' $(shell pkg-config --cflags ${LIBS})
+LDFLAGS = -L${PWD}/lib $(shell pkg-config --libs ${LIBS}) -lircclient -lm -ldl
 
-${PROG}: ${OBJS} libircclient/lib/libircclient.a config.so
-	${CC} -o ${PROG} ${OBJS} ${LDFLAGS}
+all: ${PROG} auth
 
-%.o: %.c Makefile global.h
-	${CC} ${CFLAGS} -c $< -o $@
+auth: $(patsubst %.c,%.so,$(wildcard auth/*/auth.c auth/*/*/auth.c))
+
+${PROG}: ${OBJS}
+	@echo "Building $@"
+	@${CC} -o $@ ${OBJS} ${LDFLAGS}
+
+global.h: callbacks.h threaded_functions.h game.h util.h conf.h auth.h
+
+lib/libircclient.a: Makefile 
+	@${MAKE} -C libircclient/src DESTDIR=${PWD} install
+
+%.o: %.c Makefile lib/libircclient.a global.h
+	@echo "Compiling $<"
+	@${CC} ${CFLAGS} -c $< -o $@
+
+%.i: %.c Makefile lib/libircclient.a global.h
+	@echo "Prepocessing $<"
+	@${CC} ${CFLAGS} -E $< -o $@
+
+%.so: %.c Makefile global.h
+	@echo "Compiling $<"
+	@${CC} -I${PWD} ${CFLAGS} -shared -nostartfiles -nostdlib -fPIC $< -o $@
 
 run: ${PROG}
-	./${PROG}
+	@echo "Running ${PROG}"
+	@./${PROG}
 
 clean:
-	rm -f ${PROG} ${OBJS}
-	${MAKE} -C libircclient/src clean
-
-libircclient/lib/libircclient.a: 
-	${MAKE} -C libircclient/src PREFIX=${PWD}
-
-global.h: callbacks.h threaded_functions.h game.h libircclient/lib/libircclient.a
-
-%.so: %.c Makefile
-	${CC} -shared -nostartfiles $< -o $@
+	@echo "Cleaning ${PROG}"
+	@rm -f ${PROG} ${OBJS} $(wildcard auth/*/auth.so auth/*/*/auth.so)
+	@${MAKE} -C libircclient/src DESTDIR=${PWD} clean uninstall
 
 leakcheck: ${PROG}
-	G_SLICE=always-malloc valgrind --leak-check=full --track-fds=yes --show-reachable=yes --track-origins=yes ./${PROG}
+	@echo "Leak-checking ${PROG}"
+	@G_SLICE="always-malloc" valgrind --leak-check=full --track-fds=yes --show-reachable=yes --track-origins=yes ./${PROG}
 
-.PHONY: run clean leakcheck
+.PHONY: all auth run clean leakcheck

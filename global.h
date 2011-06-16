@@ -1,5 +1,7 @@
 #include <dlfcn.h>
+#include <errno.h>
 #include <glib.h>
+#include <libconfig.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,37 +12,11 @@
 #include <unistd.h>
 #include "libircclient.h"
 #include "callbacks.h"
+#include "conf.h"
 #include "game.h"
 #include "threaded_functions.h"
 #include "util.h"
 
-struct config {
-	void *library_handle;
-	char USE_IPv6;
-	char *WOLFBOT_SERVER;
-	int WOLFBOT_PORT;
-	char *WOLFBOT_NICK;
-	char *WOLFBOT_NAME;
-	char *WOLFBOT_USER;
-	char *WOLFBOT_UMODE;
-	char *WOLFBOT_CHANNEL;
-	char *WOLFBOT_CMODE_ONENTER;
-	char *WOLFBOT_CMODE_ONLEAVE;
-	char *WOLFBOT_CMODE_ONSTART;
-	char *WOLFBOT_CMODE_ONEND;
-	char *WOLFBOT_CMODE_ONDIE;
-	char *WOLFBOT_OWNER;
-	char *WOLFBOT_OP_MODE;
-	char *WOLFBOT_DEOP_MODE;
-	char *WOLFBOT_AUTOVOICE_NICK;
-	char *WOLFBOT_AUTOVOICE_USERNAME;
-	char *WOLFBOT_AUTOVOICE_HOST_NAME;
-	char *WOLFBOT_AUTOVOICE_HOST_IP;
-	char *WOLFBOT_GAME_LOG;
-	char *WOLFBOT_QA_LOG;
-	char WOLFBOT_ROLES_ANGELS;
-	char WOLFBOT_ROLES_TRAITORS_AND_DETECTIVES;
-};
 struct func_args {
 	irc_session_t *session;
 	unsigned int event;
@@ -72,8 +48,18 @@ struct game_info {
 struct irc_ctx_t {
 	char restart;
 	int thread_count;
-	struct config config_data;
 	GStaticRecMutex *thread_mutex;
+	void *auth_library;
+	GHashTable *commands;
+	GMutex *commands_mutex;
+	GHashTable *config;
 	struct game_info game_data;
 	GMutex *game_data_mutex;
+};
+#include "auth.h"
+struct config_entry {
+	int type;
+	int element_type;
+	int size;
+	void *data;
 };

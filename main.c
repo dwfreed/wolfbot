@@ -4,14 +4,15 @@ static irc_session_t *session;
 
 void signal_handler(int signal){
 	static timer_t signal_timer = 0;
-	struct irc_ctx_t *context = irc_get_ctx(session);
+	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	g_static_rec_mutex_lock(context->thread_mutex);
-	if( g_atomic_int_get(&context->thread_count) == 0 && !g_atomic_int_dec_and_test(&context->thread_count) ){
+	if( g_atomic_int_get(&context->thread_count) < 1 ){
+		g_atomic_int_dec_and_test(&context->thread_count);
 		if( signal_timer != 0 ){
 			timer_delete(signal_timer);
 		}
-		irc_cmd_channel_mode(session, context->config_data.WOLFBOT_CHANNEL, context->config_data.WOLFBOT_CMODE_ONEND);
-		irc_cmd_channel_mode(session, context->config_data.WOLFBOT_CHANNEL, context->config_data.WOLFBOT_CMODE_ONLEAVE);
+		irc_cmd_channel_mode(session, config_get_string(context->config, "bot.channel.channel"), config_get_string(context->config, "bot.channel.mode_on_end"));
+		irc_cmd_channel_mode(session, config_get_string(context->config, "bot.channel.channel"), config_get_string(context->config, "bot.channel.mode_on_leave"));
 		if( signal == SIGINT ){
 			irc_cmd_quit(session, "I just received a SIGINT");
 		} else if( signal == SIGRTMIN ){
@@ -24,12 +25,12 @@ void signal_handler(int signal){
 	} else {
 		if( !signal_timer ){
 			if( signal == SIGINT ){
-				irc_cmd_msg(session, context->config_data.WOLFBOT_CHANNEL, "I've just received a SIGINT.  No events will be processed other than what I've already received.");
+				irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "I've just received a SIGINT.  No events will be processed other than what I've already received.");
 			} else if( signal == SIGRTMIN ){
 				if( context->restart ){
-					irc_cmd_msg(session, context->config_data.WOLFBOT_CHANNEL, "I've been asked to restart.  No events will be processed other than what I've already received.");
+					irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "I've been asked to restart.  No events will be processed other than what I've already received.");
 				} else {
-					irc_cmd_msg(session, context->config_data.WOLFBOT_CHANNEL, "I've been asked to quit.  No events will be processed other than what I've already received.");
+					irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "I've been asked to quit.  No events will be processed other than what I've already received.");
 				}
 			}
 		} else {
@@ -44,7 +45,7 @@ void signal_handler(int signal){
 	}
 }
 
-int main(int argc, char *argv[]){
+int main(int argc __attribute__((__unused__)), char *argv[]){
 	struct rlimit limits;
 	getrlimit(RLIMIT_AS, &limits);
 	limits.rlim_cur = limits.rlim_max;
@@ -80,57 +81,46 @@ int main(int argc, char *argv[]){
 	callbacks->event_join = event_join;
 	callbacks->event_kick = event_kick;
 	callbacks->event_nick = event_nick;
+	callbacks->event_notice = event_notice;
 	callbacks->event_numeric = event_numeric;
 	callbacks->event_part = event_part;
 	callbacks->event_privmsg = event_privmsg;
 	callbacks->event_quit = event_quit;
 	session = irc_create_session(callbacks);
 	free(callbacks);
-	irc_option_set(session, LIBIRC_OPTION_STRIPNICKS);
 	g_thread_init(NULL);
 	struct irc_ctx_t *context = (struct irc_ctx_t *)calloc(1, sizeof(struct irc_ctx_t));
-	context->config_data.library_handle = dlopen("./config.so", RTLD_NOW);
-	context->config_data.USE_IPv6 = *(char *)dlsym(context->config_data.library_handle, "USE_IPv6");
-	context->config_data.WOLFBOT_SERVER = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_SERVER");
-	context->config_data.WOLFBOT_PORT = *(int *)dlsym(context->config_data.library_handle, "WOLFBOT_PORT");
-	context->config_data.WOLFBOT_NICK = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_NICK");
-	context->config_data.WOLFBOT_NAME = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_NAME");
-	context->config_data.WOLFBOT_USER = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_USER");
-	context->config_data.WOLFBOT_UMODE = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_UMODE");
-	context->config_data.WOLFBOT_CHANNEL = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_CHANNEL");
-	context->config_data.WOLFBOT_CMODE_ONENTER = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_CMODE_ONENTER");
-	context->config_data.WOLFBOT_CMODE_ONLEAVE = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_CMODE_ONLEAVE");
-	context->config_data.WOLFBOT_CMODE_ONSTART = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_CMODE_ONSTART");
-	context->config_data.WOLFBOT_CMODE_ONEND = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_CMODE_ONEND");
-	context->config_data.WOLFBOT_CMODE_ONDIE = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_CMODE_ONDIE");
-	context->config_data.WOLFBOT_OWNER = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_OWNER");
-	context->config_data.WOLFBOT_OP_MODE = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_OP_MODE");
-	context->config_data.WOLFBOT_DEOP_MODE = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_DEOP_MODE");
-	context->config_data.WOLFBOT_AUTOVOICE_NICK = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_AUTOVOICE_NICK");
-	context->config_data.WOLFBOT_AUTOVOICE_USERNAME = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_AUTOVOICE_USERNAME");
-	context->config_data.WOLFBOT_AUTOVOICE_HOST_NAME = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_AUTOVOICE_HOST_NAME");
-	context->config_data.WOLFBOT_AUTOVOICE_HOST_IP = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_AUTOVOICE_HOST_IP");
-	context->config_data.WOLFBOT_GAME_LOG = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_GAME_LOG");
-	context->config_data.WOLFBOT_QA_LOG = *(char **)dlsym(context->config_data.library_handle, "WOLFBOT_QA_LOG");
-	context->config_data.WOLFBOT_ROLES_ANGELS = *(char *)dlsym(context->config_data.library_handle, "WOLFBOT_ROLES_ANGELS");
-	context->config_data.WOLFBOT_ROLES_TRAITORS_AND_DETECTIVES = *(char *)dlsym(context->config_data.library_handle, "WOLFBOT_ROLES_TRAITORS_AND_DETECTIVES");
-	g_static_rec_mutex_init(context->thread_mutex);
+	context->config = g_hash_table_new_full(g_str_hash, g_str_equal, free, config_free);
+	load_config(context->config);
+	char *auth_library_path = g_strdup_printf("auth/%s/auth.so", config_get_string(context->config, "bot.auth_plugin"));
+	context->auth_library = dlopen(auth_library_path, RTLD_NOW | RTLD_GLOBAL);
+	g_free(auth_library_path);
+	void (*auth_init_fcn)(struct irc_ctx_t *) = (void (*)(struct irc_ctx_t *))dlsym(context->auth_library, "auth_init");
+	auth_init_fcn(context);
+	GStaticRecMutex thread_mutex = { {NULL, { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} } }, 0, { { 0, 0, 0, 0} } };
+	context->thread_mutex = &thread_mutex;
 	context->game_data_mutex = g_mutex_new();
 	context->game_data.random_source = fopen("/dev/urandom", "r");
-	if( context->config_data.WOLFBOT_GAME_LOG ){
-		context->game_data.game_log = fopen(context->config_data.WOLFBOT_GAME_LOG, "a");
+	char *game_log_path;
+	if( (game_log_path = config_get_string(context->config, "bot.log.game")) ){
+		game_log_path = tilde_expansion(game_log_path);
+		context->game_data.game_log = fopen(game_log_path, "a");
+		g_free(game_log_path);
 		char gamelogopenclose[35];
 		time_t gamelogopenclosetime = time(NULL);
-		strftime(gamelogopenclose, 35, "--- Log opened %Y-%m-%d %H-%M-%S", localtime(&gamelogopenclosetime));
+		strftime(gamelogopenclose, 35, "--- Log opened %Y-%m-%d %H:%M:%S\n", localtime(&gamelogopenclosetime));
 		fprintf(context->game_data.game_log, gamelogopenclose, NULL);
 	};
-	if( context->config_data.WOLFBOT_QA_LOG ){
-		context->game_data.qa_log = fopen(context->config_data.WOLFBOT_QA_LOG, "a");
+	char *qa_log_path;
+	if( (qa_log_path = config_get_string(context->config, "bot.log.qa")) ){
+		qa_log_path = tilde_expansion(qa_log_path);
+		context->game_data.qa_log = fopen(qa_log_path, "a");
+		g_free(qa_log_path);
 		char qalogopenclose[35];
 		time_t qalogopenclosetime = time(NULL);
-		strftime(qalogopenclose, 35, "--- Log opened %Y-%m-%d %H-%M-%S", localtime(&qalogopenclosetime));
+		strftime(qalogopenclose, 35, "--- Log opened %Y-%m-%d %H:%M:%S\n", localtime(&qalogopenclosetime));
 		fprintf(context->game_data.qa_log, qalogopenclose, NULL);
-	}
+	};
 	context->game_data.players = g_hash_table_new_full(g_str_hash, g_str_equal, free, free);
 	context->game_data.hash_roles = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, free);
 	context->game_data.tree_roles = g_tree_new((GCompareFunc)strcmp);
@@ -144,10 +134,10 @@ int main(int argc, char *argv[]){
 	context->game_data.detective_ids = g_hash_table_new(g_str_hash, g_str_equal);
 	irc_set_ctx(session, context);
 	char *pw = getpass("Password: ");
-	if( context->config_data.USE_IPv6 ){
-		irc_connect6(session, context->config_data.WOLFBOT_SERVER, context->config_data.WOLFBOT_PORT, pw, context->config_data.WOLFBOT_NICK, context->config_data.WOLFBOT_USER, context->config_data.WOLFBOT_NAME);
+	if( config_get_int(context->config, "bot.ipv6") ){
+		irc_connect6(session, config_get_string(context->config, "bot.server"), config_get_int(context->config, "bot.port"), pw, config_get_string(context->config, "bot.nick"), config_get_string(context->config, "bot.user"), config_get_string(context->config, "bot.name"));
 	} else {
-		irc_connect(session, context->config_data.WOLFBOT_SERVER, context->config_data.WOLFBOT_PORT, pw, context->config_data.WOLFBOT_NICK, context->config_data.WOLFBOT_USER, context->config_data.WOLFBOT_NAME);
+		irc_connect6(session, config_get_string(context->config, "bot.server"), config_get_int(context->config, "bot.port"), pw, config_get_string(context->config, "bot.nick"), config_get_string(context->config, "bot.user"), config_get_string(context->config, "bot.name"));
 	}
 	memset(pw, 0, strlen(pw) + 1);
 	free(pw);
@@ -171,24 +161,27 @@ int main(int argc, char *argv[]){
 	g_hash_table_destroy(context->game_data.hash_roles);
 	g_hash_table_destroy(context->game_data.players);
 	fclose(context->game_data.random_source);
-	if( context->config_data.WOLFBOT_QA_LOG ){
+	if( config_get_string(context->config, "bot.log.qa") ){
 		char qalogopenclose[35];
 		time_t qalogopenclosetime = time(NULL);
-		strftime(qalogopenclose, 35, "--- Log closed %Y-%m-%d %H-%M-%S", localtime(&qalogopenclosetime));
+		strftime(qalogopenclose, 35, "--- Log closed %Y-%m-%d %H:%M:%S\n", localtime(&qalogopenclosetime));
 		fprintf(context->game_data.qa_log, qalogopenclose, NULL);
 		fclose(context->game_data.qa_log);
 	}
-	if( context->config_data.WOLFBOT_GAME_LOG ){
+	if( config_get_string(context->config, "bot.log.game") ){
 		char gamelogopenclose[35];
 		time_t gamelogopenclosetime = time(NULL);
-		strftime(gamelogopenclose, 35, "--- Log closed %Y-%m-%d %H-%M-%S", localtime(&gamelogopenclosetime));
+		strftime(gamelogopenclose, 35, "--- Log closed %Y-%m-%d %H:%M:%S\n", localtime(&gamelogopenclosetime));
 		fprintf(context->game_data.game_log, gamelogopenclose, NULL);
 		fclose(context->game_data.game_log);
 	}
 	g_mutex_free(context->game_data_mutex);
 	g_static_rec_mutex_unlock_full(context->thread_mutex);
 	g_static_rec_mutex_free(context->thread_mutex);
-	dlclose(context->config_data.library_handle);
+	void (*auth_fini_fcn)(struct irc_ctx_t *) = (void (*)(struct irc_ctx_t *))dlsym(context->auth_library, "auth_fini");
+	auth_fini_fcn(context);
+	dlclose(context->auth_library);
+	g_hash_table_destroy(context->config);
 	irc_destroy_session(session);
 	if( context->restart ){
 		free(context);

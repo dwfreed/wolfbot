@@ -23,19 +23,7 @@
 #include "colors.c"
 #include "dcc.c"
 
-#ifdef _MSC_VER
-	/*
-
-	 * The debugger of MSVC 2005 does not like strdup.
-	 * It complains about heap corruption when free is called.
-	 * Use _strdup instead.
-	 */
-	#undef strdup
-	#define strdup _strdup
-#endif
-
-
-#define IS_DEBUG_ENABLED(s)	((s)->option & LIBIRC_OPTION_DEBUG)
+#define IS_DEBUG_ENABLED(s)	((s)->options & LIBIRC_OPTION_DEBUG)
 
 
 irc_session_t * irc_create_session (irc_callbacks_t	* callbacks)
@@ -198,13 +186,6 @@ int irc_connect6 (irc_session_t * session,
 	struct sockaddr_in6 saddr;
 	struct addrinfo ainfo, *res = NULL;
 	char portStr[32];
-#if defined (_WIN32)
-	int addrlen = sizeof(saddr);
-	HMODULE hWsock;
-	getaddrinfo_ptr_t getaddrinfo_ptr;
-	freeaddrinfo_ptr_t freeaddrinfo_ptr;
-	int resolvesuccess = 0;
-#endif
 	sprintf(portStr, "%u", (unsigned)port);
 
 	// Check and copy all the specified fields
@@ -236,41 +217,6 @@ int irc_connect6 (irc_session_t * session,
 	saddr.sin6_family = AF_INET6;
 	saddr.sin6_port = htons (port);	
 
-#if defined (_WIN32)
-	if ( WSAStringToAddressA( (LPSTR)server, AF_INET6, NULL, (struct sockaddr *)&saddr, &addrlen ) == SOCKET_ERROR )
-	{
-		hWsock = LoadLibraryA("ws2_32");
-
-		if (hWsock)
-		{
-			/* Determine functions at runtime, because windows systems < XP do not
-			 * support getaddrinfo. */
-			getaddrinfo_ptr = (getaddrinfo_ptr_t)GetProcAddress(hWsock, "getaddrinfo");
-			freeaddrinfo_ptr = (freeaddrinfo_ptr_t)GetProcAddress(hWsock, "freeaddrinfo");
-
-			if (getaddrinfo_ptr && freeaddrinfo_ptr)
-			{
-				memset(&ainfo, 0, sizeof(ainfo));
-				ainfo.ai_family = AF_INET6;
-				ainfo.ai_socktype = SOCK_STREAM;
-				ainfo.ai_protocol = 0;
-
-				if ( getaddrinfo_ptr(server, portStr, &ainfo, &res) == 0 && res )
-				{
-					resolvesuccess = 1;
-					memcpy( &saddr, res->ai_addr, res->ai_addrlen );
-					freeaddrinfo_ptr( res );
-				}
-			}
-			FreeLibrary(hWsock);
-		}
-		if (!resolvesuccess)
-		{
-			session->lasterror = LIBIRC_ERR_RESOLV;
-			return 1;
-		}
-	}
-#else
 	if ( inet_pton( AF_INET6, server, (void*) &saddr.sin6_addr ) <= 0 )
 	{		
 		memset( &ainfo, 0, sizeof(ainfo) );
@@ -287,7 +233,6 @@ int irc_connect6 (irc_session_t * session,
 		memcpy( &saddr, res->ai_addr, res->ai_addrlen );
 		freeaddrinfo( res );
 	}
-#endif
 	
 	// create the IRC server socket
 	if ( socket_create( PF_INET6, SOCK_STREAM, &session->sock)
@@ -399,12 +344,13 @@ int irc_add_select_descriptors (irc_session_t * session, fd_set *in_set, fd_set 
 }
 
 
-static void libirc_process_incoming_data (irc_session_t * session, int process_length)
+static void libirc_process_incoming_data (irc_session_t * session, size_t process_length)
 {
 	#define MAX_PARAMS_ALLOWED 10
 	char buf[2*512], *p, *s;
 	const char * command = 0, *prefix = 0, *params[MAX_PARAMS_ALLOWED+1];
 	int code = 0, paramindex = 0;
+    char *buf_end = buf + process_length;
 
 	if ( process_length > sizeof(buf) )
 		abort(); // should be impossible
@@ -496,7 +442,7 @@ static void libirc_process_incoming_data (irc_session_t * session, int process_l
 	}
 
 	// Handle PING/PONG
-	if ( command && !strcmp (command, "PING") && params[0] )
+	if ( command && !strncmp (command, "PING", buf_end - command) && params[0] )
 	{
 		irc_send_raw (session, "PONG %s", params[0]);
 		return;
@@ -520,7 +466,7 @@ static void libirc_process_incoming_data (irc_session_t * session, int process_l
 	}
 	else
 	{
-		if ( !strcmp (command, "NICK") )
+		if ( !strncmp (command, "NICK", buf_end - command) )
 		{
 			/*
 			 * If we're changed our nick, we should save it.
@@ -529,7 +475,7 @@ static void libirc_process_incoming_data (irc_session_t * session, int process_l
 
 			irc_target_get_nick (prefix, nickbuf, sizeof(nickbuf));
 
-			if ( !strcmp (nickbuf, session->nick) && paramindex > 0 )
+			if ( !strncmp (nickbuf, session->nick, strlen(session->nick)) && paramindex > 0 )
 			{
 				free (session->nick);
 				session->nick = strdup (params[0]);
@@ -538,24 +484,24 @@ static void libirc_process_incoming_data (irc_session_t * session, int process_l
 			if ( session->callbacks.event_nick )
 				(*session->callbacks.event_nick) (session, command, prefix, params, paramindex);
 		}
-		else if ( !strcmp (command, "QUIT") )
+		else if ( !strncmp (command, "QUIT", buf_end - command) )
 		{
 			if ( session->callbacks.event_quit )
 				(*session->callbacks.event_quit) (session, command, prefix, params, paramindex);
 		}
-		else if ( !strcmp (command, "JOIN") )
+		else if ( !strncmp (command, "JOIN", buf_end - command) )
 		{
 			if ( session->callbacks.event_join )
 				(*session->callbacks.event_join) (session, command, prefix, params, paramindex);
 		}
-		else if ( !strcmp (command, "PART") )
+		else if ( !strncmp (command, "PART", buf_end - command) )
 		{
 			if ( session->callbacks.event_part )
 				(*session->callbacks.event_part) (session, command, prefix, params, paramindex);
 		}
-		else if ( !strcmp (command, "MODE") )
+		else if ( !strncmp (command, "MODE", buf_end - command) )
 		{
-			if ( paramindex > 0 && !strcmp (params[0], session->nick) )
+			if ( paramindex > 0 && !strncmp (params[0], session->nick, strlen(session->nick)) )
 			{
 				params[0] = params[1];
 				paramindex = 1;
@@ -569,21 +515,21 @@ static void libirc_process_incoming_data (irc_session_t * session, int process_l
 					(*session->callbacks.event_mode) (session, command, prefix, params, paramindex);
 			}
 		}
-		else if ( !strcmp (command, "TOPIC") )
+		else if ( !strncmp (command, "TOPIC", buf_end - command) )
 		{
 			if ( session->callbacks.event_topic )
 				(*session->callbacks.event_topic) (session, command, prefix, params, paramindex);
 		}
-		else if ( !strcmp (command, "KICK") )
+		else if ( !strncmp (command, "KICK", buf_end - command) )
 		{
 			if ( session->callbacks.event_kick )
 				(*session->callbacks.event_kick) (session, command, prefix, params, paramindex);
 		}
-		else if ( !strcmp (command, "PRIVMSG") )
+		else if ( !strncmp (command, "PRIVMSG", buf_end - command) )
 		{
 			if ( paramindex > 1 )
 			{ 
-				unsigned int msglen = strlen (params[1]);
+				size_t msglen = strlen (params[1]);
 
 				/* 
 				 * Check for CTCP request (a CTCP message starts from 0x01 
@@ -600,9 +546,9 @@ static void libirc_process_incoming_data (irc_session_t * session, int process_l
 					memcpy (ctcp_buf, params[1] + 1, msglen);
 					ctcp_buf[msglen] = '\0';
 
-					if ( strstr(ctcp_buf, "DCC ") == ctcp_buf )
+					if ( !strncasecmp(ctcp_buf, "DCC ", msglen) )
 						libirc_dcc_request (session, prefix, ctcp_buf);
-					else if ( strstr(ctcp_buf, "ACTION ") == ctcp_buf
+					else if ( !strncasecmp( ctcp_buf, "ACTION ", msglen)
 					&& session->callbacks.event_ctcp_action )
 					{
 						params[1] = ctcp_buf + 7; // the length of "ACTION "
@@ -619,7 +565,7 @@ static void libirc_process_incoming_data (irc_session_t * session, int process_l
 							(*session->callbacks.event_ctcp_req) (session, "CTCP", prefix, params, paramindex);
 					}
 				}
-				else if ( !strcmp (params[0], session->nick) )
+				else if ( !strncasecmp (params[0], session->nick, strlen(session->nick) ) )
 				{
 					if ( session->callbacks.event_privmsg )
 						(*session->callbacks.event_privmsg) (session, command, prefix, params, paramindex);
@@ -631,9 +577,9 @@ static void libirc_process_incoming_data (irc_session_t * session, int process_l
 				}
 			}
 		}
-		else if ( !strcmp (command, "NOTICE") )
+		else if ( !strncmp (command, "NOTICE", buf_end - command) )
 		{
-			unsigned int msglen = strlen (params[1]);
+			size_t msglen = strlen (params[1]);
 
 			/* 
 			 * Check for CTCP request (a CTCP message starts from 0x01 
@@ -656,18 +602,21 @@ static void libirc_process_incoming_data (irc_session_t * session, int process_l
 				if ( session->callbacks.event_ctcp_rep )
 					(*session->callbacks.event_ctcp_rep) (session, "CTCP", prefix, params, paramindex);
 			}
-			else
+			else if ( !strncasecmp (params[0], session->nick, strlen(session->nick) ) )
 			{
 				if ( session->callbacks.event_notice )
 					(*session->callbacks.event_notice) (session, command, prefix, params, paramindex);
+			} else {
+				if ( session->callbacks.event_channel_notice )
+					(*session->callbacks.event_channel_notice) (session, command, prefix, params, paramindex);
 			}
 		}
-		else if ( !strcmp (command, "INVITE") )
+		else if ( !strncmp (command, "INVITE", buf_end - command) )
 		{
 			if ( session->callbacks.event_invite )
 				(*session->callbacks.event_invite) (session, command, prefix, params, paramindex);
 		}
-		else if ( !strcmp (command, "KILL") )
+		else if ( !strncmp (command, "KILL", buf_end - command) )
 		{
 			; /* ignore this event - not all servers generate this */
 		}
@@ -725,8 +674,15 @@ int irc_process_select_descriptors (irc_session_t * session, fd_set *in_set, fd_
 			memcpy (&session->local_addr, &((struct sockaddr_in6 *)&laddr)->sin6_addr, sizeof(struct in6_addr));
 
 #if defined (ENABLE_DEBUG)
+#ifdef ENABLE_IPV6
+		if( IS_DEBUG_ENABLED(session) ){
+			char local_address[INET6_ADDRSTRLEN];
+			fprintf(stderr, "[DEBUG] Detected local address: %s\n", inet_ntop(AF_INET6, &session->local_addr, local_address, INET6_ADDRSTRLEN));
+		}
+#else
 		if ( IS_DEBUG_ENABLED(session) )
 			fprintf (stderr, "[DEBUG] Detected local address: %s\n", inet_ntoa(session->local_addr));
+#endif
 #endif
 
 		session->state = LIBIRC_STATE_CONNECTED;
