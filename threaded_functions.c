@@ -25,7 +25,7 @@ void *threaded_channel(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
-	(void)g_atomic_int_dec_and_test(&context->thread_count);
+	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }
 
@@ -35,7 +35,7 @@ void *threaded_connect(void *args){
 	irc_cmd_user_mode(struct_args->session, config_get_string(context->config, "bot.user_mode"));
 	irc_cmd_join(struct_args->session, config_get_string(context->config, "bot.channel.channel"), NULL);
 	free(struct_args);
-	(void)g_atomic_int_dec_and_test(&context->thread_count);
+	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }
 
@@ -54,7 +54,7 @@ void *threaded_join(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
-	(void)g_atomic_int_dec_and_test(&context->thread_count);
+	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }
 
@@ -69,7 +69,7 @@ void *threaded_kick(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
-	(void)g_atomic_int_dec_and_test(&context->thread_count);
+	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }
 
@@ -84,7 +84,7 @@ void *threaded_nick(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
-	(void)g_atomic_int_dec_and_test(&context->thread_count);
+	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }
 
@@ -100,7 +100,7 @@ void *threaded_notice(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
-	(void)g_atomic_int_dec_and_test(&context->thread_count);
+	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }
 
@@ -108,7 +108,9 @@ void *threaded_numeric(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	int (*numeric_fcn)(struct func_args *) = (int (*)(struct func_args *))dlsym(context->auth_library, "numeric");
-	numeric_fcn(struct_args);
+	if( !numeric_fcn(struct_args) ){
+		
+	}
 	free(struct_args->origin);
 	unsigned int i = 0;
 	for( i = 0; i < struct_args->count; ++i ){
@@ -116,7 +118,7 @@ void *threaded_numeric(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
-	(void)g_atomic_int_dec_and_test(&context->thread_count);
+	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }
 
@@ -126,7 +128,7 @@ void *threaded_part(void *args){
 	
 	free(struct_args->origin);
 	free(struct_args);
-	(void)g_atomic_int_dec_and_test(&context->thread_count);
+	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }
 
@@ -135,7 +137,7 @@ void *threaded_privmsg(void *args){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	int (*privmsg_fcn)(struct func_args *) = (int (*)(struct func_args *))dlsym(context->auth_library, "privmsg");
 	if( !privmsg_fcn(struct_args) ){
-
+		
 	}
 	free(struct_args->origin);
 	unsigned int i = 0;
@@ -144,7 +146,7 @@ void *threaded_privmsg(void *args){
 	}
 	free(struct_args->params);
 	free(struct_args);
-	(void)g_atomic_int_dec_and_test(&context->thread_count);
+	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }
 
@@ -154,6 +156,6 @@ void *threaded_quit(void *args){
 	
 	free(struct_args->origin);
 	free(struct_args);
-	(void)g_atomic_int_dec_and_test(&context->thread_count);
+	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }

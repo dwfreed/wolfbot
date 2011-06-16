@@ -49,7 +49,7 @@ struct game_info {
 struct irc_ctx_t {
 	char restart;
 	int thread_count;
-	GStaticRecMutex *thread_mutex;
+	GMutex *thread_mutex;
 	void *auth_library;
 	GHashTable *commands;
 	GMutex *commands_mutex;
@@ -63,4 +63,9 @@ struct config_entry {
 	int element_type;
 	int size;
 	void *data;
+};
+
+struct timer_callback_params {
+	irc_session_t *session;
+	timer_t timer;
 };

@@ -42,50 +42,45 @@ static void call_command(void *data, void *user_data){
 	char *command = (char *)data;
 	irc_session_t *session = (irc_session_t *)user_data;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
-	int numlocks;
-	if( g_static_rec_mutex_trylock(context->thread_mutex) ){
-		if( ( numlocks = g_static_rec_mutex_unlock_full(context->thread_mutex) ) == 1 ){
-			if( g_atomic_int_get(&context->thread_count) > -1 ){
-				g_atomic_int_inc(&context->thread_count);
-				if( !strcmp(command, "die") ){
-					pthread_t thread_id;
-					if( pthread_create(&thread_id, NULL, die, session) ){
-						fprintf(stderr, "Failed to thread die, calling direct!\n");
-						die(session);
-					} else {
-						pthread_detach(thread_id);
-					}
-				} else if( !strcmp(command, "restart") ){
-					pthread_t thread_id;
-					if( pthread_create(&thread_id, NULL, restart, session) ){
-						fprintf(stderr, "Failed to thread restart, calling direct!\n");
-						restart(session);
-					} else {
-						pthread_detach(thread_id);
-					}
-				} else if( !strcmp(command, "upgrade") ){
-					pthread_t thread_id;
-					if( pthread_create(&thread_id, NULL, upgrade, session) ){
-						fprintf(stderr, "Failed to thread upgrade, calling direct!\n");
-						upgrade(session);
-					} else {
-						pthread_detach(thread_id);
-					}
-				} else if( !strcmp(command, "rehash") ){
-					pthread_t thread_id;
-					if( pthread_create(&thread_id, NULL, rehash, session) ){
-						fprintf(stderr, "Failed to thread rehash, calling direct!\n");
-						rehash(session);
-					} else {
-						pthread_detach(thread_id);
-					}
-					
+	if( g_mutex_trylock(context->thread_mutex) ){
+		g_mutex_unlock(context->thread_mutex);
+		if( g_atomic_int_get(&context->thread_count) > -1 ){
+			g_atomic_int_inc(&context->thread_count);
+			if( !strcmp(command, "die") ){
+				pthread_t thread_id;
+				if( pthread_create(&thread_id, NULL, die, session) ){
+					fprintf(stderr, "Failed to thread die, calling direct!\n");
+					die(session);
 				} else {
-					irc_send_raw(session, command);
+					pthread_detach(thread_id);
 				}
+			} else if( !strcmp(command, "restart") ){
+				pthread_t thread_id;
+				if( pthread_create(&thread_id, NULL, restart, session) ){
+					fprintf(stderr, "Failed to thread restart, calling direct!\n");
+					restart(session);
+				} else {
+					pthread_detach(thread_id);
+				}
+			} else if( !strcmp(command, "upgrade") ){
+				pthread_t thread_id;
+				if( pthread_create(&thread_id, NULL, upgrade, session) ){
+					fprintf(stderr, "Failed to thread upgrade, calling direct!\n");
+					upgrade(session);
+				} else {
+					pthread_detach(thread_id);
+				}
+			} else if( !strcmp(command, "rehash") ){
+				pthread_t thread_id;
+				if( pthread_create(&thread_id, NULL, rehash, session) ){
+					fprintf(stderr, "Failed to thread rehash, calling direct!\n");
+					rehash(session);
+				} else {
+					pthread_detach(thread_id);
+				}
+			} else {
+				irc_send_raw(session, command);
 			}
-		} else {
-			g_static_rec_mutex_lock_full(context->thread_mutex, numlocks - 1);
 		}
 	}
 }
@@ -95,14 +90,26 @@ int notice(struct func_args *args __attribute__((__unused__))){
 }
 
 int numeric(struct func_args *args){
+	int ret_val = 0;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(args->session);
 	GQueue *commands;
 	int i;
 	switch( args->event ){
+		case 313:
+			g_mutex_lock(context->commands_mutex);
+			if( (commands = g_hash_table_lookup(context->commands, args->params[1])) ){
+				ret_val = 1;
+				g_queue_foreach(commands, call_command, args->session);
+				g_queue_foreach(commands, queue_cleanup, NULL);
+				g_hash_table_remove(context->commands, args->params[1]);
+			}
+			g_mutex_unlock(context->commands_mutex);
+			break;
 		case 307:
 			if( !strcmp(config_get_string(context->config, "bot.owner"), args->params[1]) ){
 				g_mutex_lock(context->commands_mutex);
 				if( (commands = g_hash_table_lookup(context->commands, args->params[1])) ){
+					ret_val = 1;
 					g_queue_foreach(commands, call_command, args->session);
 					g_queue_foreach(commands, queue_cleanup, NULL);
 					g_hash_table_remove(context->commands, args->params[1]);
@@ -119,6 +126,7 @@ int numeric(struct func_args *args){
 				g_mutex_lock(context->commands_mutex);
 				if( (commands = g_hash_table_lookup(context->commands, args->params[1])) ){
 					if( i != ops_size ){
+						ret_val = 1;
 						g_queue_foreach(commands, call_command, args->session);
 					}
 					g_queue_foreach(commands, queue_cleanup, NULL);
@@ -137,6 +145,7 @@ int numeric(struct func_args *args){
 							case '~':
 							case '&':
 							case '@':
+								ret_val = 1;
 								g_queue_foreach(commands, call_command, args->session);
 							default:
 								g_queue_foreach(commands, queue_cleanup, NULL);
@@ -150,25 +159,8 @@ int numeric(struct func_args *args){
 			}
 			g_strfreev(channels);
 			break;
-		case 313:
-			g_mutex_lock(context->commands_mutex);
-			if( (commands = g_hash_table_lookup(context->commands, args->params[1])) ){
-				g_queue_foreach(commands, call_command, args->session);
-				g_queue_foreach(commands, queue_cleanup, NULL);
-				g_hash_table_remove(context->commands, args->params[1]);
-			}
-			g_mutex_unlock(context->commands_mutex);
-			break;
-		case 318:
-			g_mutex_lock(context->commands_mutex);
-			if( (commands = g_hash_table_lookup(context->commands, args->params[1])) ){
-				g_queue_foreach(commands, queue_cleanup, NULL);
-				g_hash_table_remove(context->commands, args->params[1]);
-			}
-			g_mutex_unlock(context->commands_mutex);
-			break;
 	}
-	return 0;
+	return ret_val;
 }
 
 int privmsg(struct func_args *args __attribute__((__unused__))){

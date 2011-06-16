@@ -1,49 +1,5 @@
 #include "global.h"
 
-static irc_session_t *session;
-
-void signal_handler(int signal){
-	static timer_t signal_timer = 0;
-	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
-	g_static_rec_mutex_lock(context->thread_mutex);
-	if( g_atomic_int_get(&context->thread_count) < 1 && !g_atomic_int_dec_and_test(&context->thread_count) ){
-		if( signal_timer != 0 ){
-			timer_delete(signal_timer);
-		}
-		irc_cmd_channel_mode(session, config_get_string(context->config, "bot.channel.channel"), config_get_string(context->config, "bot.channel.mode_on_end"));
-		irc_cmd_channel_mode(session, config_get_string(context->config, "bot.channel.channel"), config_get_string(context->config, "bot.channel.mode_on_leave"));
-		if( signal == SIGINT ){
-			irc_cmd_quit(session, "I just received a SIGINT");
-		} else if( signal == SIGRTMIN ){
-			if( context->restart ){
-				irc_cmd_quit(session, "Be back soon!");
-			} else {
-				irc_cmd_quit(session, "Bye!");
-			}
-		}
-	} else {
-		if( !signal_timer ){
-			if( signal == SIGINT ){
-				irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "I've just received a SIGINT.  No events will be processed other than what I've already received.");
-			} else if( signal == SIGRTMIN ){
-				if( context->restart ){
-					irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "I've been asked to restart.  No events will be processed other than what I've already received.");
-				} else {
-					irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "I've been asked to quit.  No events will be processed other than what I've already received.");
-				}
-			}
-		} else {
-			timer_delete(signal_timer);
-		}
-		struct sigevent signal_timer_event;
-		signal_timer_event.sigev_notify = SIGEV_SIGNAL;
-		signal_timer_event.sigev_signo = signal;
-		timer_create(CLOCK_REALTIME, &signal_timer_event, &signal_timer);
-		struct itimerspec timer_time = { {0, 0}, {5, 0} };
-		timer_settime(signal_timer, 0, &timer_time, NULL);
-	}
-}
-
 int main(int argc __attribute__((__unused__)), char *argv[]){
 	struct rlimit limits;
 	getrlimit(RLIMIT_AS, &limits);
@@ -85,6 +41,7 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	callbacks->event_part = event_part;
 	callbacks->event_privmsg = event_privmsg;
 	callbacks->event_quit = event_quit;
+	irc_session_t *session;
 	session = irc_create_session(callbacks);
 	free(callbacks);
 	irc_option_set(session, LIBIRC_OPTION_STRIPNICKS);
@@ -97,8 +54,7 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	g_free(auth_library_path);
 	void (*auth_init_fcn)(struct irc_ctx_t *) = (void (*)(struct irc_ctx_t *))dlsym(context->auth_library, "auth_init");
 	auth_init_fcn(context);
-	GStaticRecMutex thread_mutex = { {NULL, { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} } }, 0, { { 0, 0, 0, 0} } };
-	context->thread_mutex = &thread_mutex;
+	context->thread_mutex = g_mutex_new();
 	context->game_data_mutex = g_mutex_new();
 	context->game_data.random_source = fopen("/dev/urandom", "r");
 	char *game_log_path;
@@ -141,14 +97,8 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	}
 	memset(pw, 0, strlen(pw) + 1);
 	free(pw);
-	struct sigaction *signal_sigaction_struct = (struct sigaction *)calloc(1, sizeof(struct sigaction));
-	signal_sigaction_struct->sa_handler = signal_handler;
-	signal_sigaction_struct->sa_flags = SA_RESTART;
-	sigaction(SIGINT, signal_sigaction_struct, NULL);
-	sigaction(SIGRTMIN, signal_sigaction_struct, NULL);
 	irc_run(session);
 	sleep(1);
-	free(signal_sigaction_struct);
 	g_hash_table_destroy(context->game_data.detective_ids);
 	g_hash_table_destroy(context->game_data.guardian_defendants);
 	g_hash_table_destroy(context->game_data.guardian_defends);
@@ -176,8 +126,7 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 		fclose(context->game_data.game_log);
 	}
 	g_mutex_free(context->game_data_mutex);
-	g_static_rec_mutex_unlock_full(context->thread_mutex);
-	g_static_rec_mutex_free(context->thread_mutex);
+	g_mutex_free(context->thread_mutex);
 	void (*auth_fini_fcn)(struct irc_ctx_t *) = (void (*)(struct irc_ctx_t *))dlsym(context->auth_library, "auth_fini");
 	auth_fini_fcn(context);
 	dlclose(context->auth_library);
