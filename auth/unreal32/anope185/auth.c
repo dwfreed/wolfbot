@@ -41,19 +41,44 @@ void check_auth(irc_session_t *session, char *nick, char *command){
 static void call_command(void *data, void *user_data){
 	char *command = (char *)data;
 	irc_session_t *session = (irc_session_t *)user_data;
-	struct irc_ctx_t *context (struct irc_ctx_t *)irc_get_ctx(session);
+	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	int numlocks;
 	if( g_static_rec_mutex_trylock(context->thread_mutex) ){
 		if( ( numlocks = g_static_rec_mutex_unlock_full(context->thread_mutex) ) == 1 ){
 			if( g_atomic_int_get(&context->thread_count) > -1 ){
 				g_atomic_int_inc(&context->thread_count);
 				if( !strcmp(command, "die") ){
-					
+					pthread_t thread_id;
+					if( pthread_create(&thread_id, NULL, die, NULL) ){
+						fprintf(stderr, "Failed to thread die, calling direct!\n");
+						die(NULL);
+					} else {
+						pthread_detach(thread_id);
+					}
 				} else if( !strcmp(command, "restart") ){
-					
+					pthread_t thread_id;
+					if( pthread_create(&thread_id, NULL, restart, NULL) ){
+						fprintf(stderr, "Failed to thread restart, calling direct!\n");
+						restart(NULL);
+					} else {
+						pthread_detach(thread_id);
+					}
 				} else if( !strcmp(command, "upgrade") ){
-					
+					pthread_t thread_id;
+					if( pthread_create(&thread_id, NULL, upgrade, NULL) ){
+						fprintf(stderr, "Failed to thread upgrade, calling direct!\n");
+						upgrade(NULL);
+					} else {
+						pthread_detach(thread_id);
+					}
 				} else if( !strcmp(command, "rehash") ){
+					pthread_t thread_id;
+					if( pthread_create(&thread_id, NULL, rehash, NULL) ){
+						fprintf(stderr, "Failed to thread rehash, calling direct!\n");
+						rehash(NULL);
+					} else {
+						pthread_detach(thread_id);
+					}
 					
 				} else {
 					irc_send_raw(session, command);

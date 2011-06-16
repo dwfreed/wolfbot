@@ -6,8 +6,7 @@ void signal_handler(int signal){
 	static timer_t signal_timer = 0;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	g_static_rec_mutex_lock(context->thread_mutex);
-	if( g_atomic_int_get(&context->thread_count) < 1 ){
-		g_atomic_int_dec_and_test(&context->thread_count);
+	if( g_atomic_int_get(&context->thread_count) < 1 && !g_atomic_int_dec_and_test(&context->thread_count) ){
 		if( signal_timer != 0 ){
 			timer_delete(signal_timer);
 		}
