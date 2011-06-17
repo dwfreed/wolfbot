@@ -62,9 +62,9 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 		game_log_path = tilde_expansion(game_log_path);
 		context->game_data.game_log = fopen(game_log_path, "a");
 		g_free(game_log_path);
-		char gamelogopenclose[35];
+		char gamelogopenclose[36];
 		time_t gamelogopenclosetime = time(NULL);
-		strftime(gamelogopenclose, 35, "--- Log opened %Y-%m-%d %H:%M:%S\n", localtime(&gamelogopenclosetime));
+		strftime(gamelogopenclose, 36, "--- Log opened %Y-%m-%d %H:%M:%S\n", localtime(&gamelogopenclosetime));
 		fprintf(context->game_data.game_log, gamelogopenclose, NULL);
 	};
 	char *qa_log_path;
@@ -72,9 +72,9 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 		qa_log_path = tilde_expansion(qa_log_path);
 		context->game_data.qa_log = fopen(qa_log_path, "a");
 		g_free(qa_log_path);
-		char qalogopenclose[35];
+		char qalogopenclose[36];
 		time_t qalogopenclosetime = time(NULL);
-		strftime(qalogopenclose, 35, "--- Log opened %Y-%m-%d %H:%M:%S\n", localtime(&qalogopenclosetime));
+		strftime(qalogopenclose, 36, "--- Log opened %Y-%m-%d %H:%M:%S\n", localtime(&qalogopenclosetime));
 		fprintf(context->game_data.qa_log, qalogopenclose, NULL);
 	};
 	context->game_data.players = g_hash_table_new_full(g_str_hash, g_str_equal, free, free);
@@ -89,14 +89,11 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	context->game_data.guardian_defendants = g_hash_table_new(g_str_hash, g_str_equal);
 	context->game_data.detective_ids = g_hash_table_new(g_str_hash, g_str_equal);
 	irc_set_ctx(session, context);
-	char *pw = getpass("Password: ");
 	if( config_get_int(context->config, "bot.ipv6") ){
-		irc_connect6(session, config_get_string(context->config, "bot.server"), config_get_int(context->config, "bot.port"), pw, config_get_string(context->config, "bot.nick"), config_get_string(context->config, "bot.user"), config_get_string(context->config, "bot.name"));
+		irc_connect6(session, config_get_string(context->config, "bot.server"), config_get_int(context->config, "bot.port"), config_get_string(context->config, "bot.password"), config_get_string(context->config, "bot.nick"), config_get_string(context->config, "bot.user"), config_get_string(context->config, "bot.name"));
 	} else {
-		irc_connect6(session, config_get_string(context->config, "bot.server"), config_get_int(context->config, "bot.port"), pw, config_get_string(context->config, "bot.nick"), config_get_string(context->config, "bot.user"), config_get_string(context->config, "bot.name"));
+		irc_connect6(session, config_get_string(context->config, "bot.server"), config_get_int(context->config, "bot.port"), config_get_string(context->config, "bot.password"), config_get_string(context->config, "bot.nick"), config_get_string(context->config, "bot.user"), config_get_string(context->config, "bot.name"));
 	}
-	memset(pw, 0, strlen(pw) + 1);
-	free(pw);
 	irc_run(session);
 	sleep(1);
 	g_hash_table_destroy(context->game_data.detective_ids);
@@ -112,16 +109,16 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	g_hash_table_destroy(context->game_data.players);
 	fclose(context->game_data.random_source);
 	if( config_get_string(context->config, "bot.log.qa") ){
-		char qalogopenclose[35];
+		char qalogopenclose[36];
 		time_t qalogopenclosetime = time(NULL);
-		strftime(qalogopenclose, 35, "--- Log closed %Y-%m-%d %H:%M:%S\n", localtime(&qalogopenclosetime));
+		strftime(qalogopenclose, 36, "--- Log closed %Y-%m-%d %H:%M:%S\n", localtime(&qalogopenclosetime));
 		fprintf(context->game_data.qa_log, qalogopenclose, NULL);
 		fclose(context->game_data.qa_log);
 	}
 	if( config_get_string(context->config, "bot.log.game") ){
-		char gamelogopenclose[35];
+		char gamelogopenclose[36];
 		time_t gamelogopenclosetime = time(NULL);
-		strftime(gamelogopenclose, 35, "--- Log closed %Y-%m-%d %H:%M:%S\n", localtime(&gamelogopenclosetime));
+		strftime(gamelogopenclose, 36, "--- Log closed %Y-%m-%d %H:%M:%S\n", localtime(&gamelogopenclosetime));
 		fprintf(context->game_data.game_log, gamelogopenclose, NULL);
 		fclose(context->game_data.game_log);
 	}

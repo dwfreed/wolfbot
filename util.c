@@ -128,6 +128,36 @@ void *restart(void *args){
 void *upgrade(void *args){
 	irc_session_t *session = (irc_session_t *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
+	int hg_ret_val = system("hg in --bundle incoming.bundle");
+	if( WEXITSTATUS(hg_ret_val) == 0 ){
+		system("hg pull -u incoming.bundle");
+		remove("incoming.bundle");
+		system("make clean");
+	}
+	int make_ret_val = system("make -q");
+	if( WEXITSTATUS(make_ret_val) ){
+		system("make");
+		FILE *wolfbot_exec;
+		if( !(wolfbot_exec = fopen("wolfbot", "r")) ){
+			irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "Upgrade failed!");
+		} else {
+			fclose(wolfbot_exec);
+			irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "Upgrade complete!");
+			if( g_mutex_trylock(context->thread_mutex) ){
+				g_mutex_unlock(context->thread_mutex);
+				if( g_atomic_int_get(&context->thread_count) > -1 ){
+					g_atomic_int_inc(&context->thread_count);
+					pthread_t thread_id;
+					if( pthread_create(&thread_id, NULL, restart, session) ){
+						fprintf(stderr, "Failed to thread restart, calling direct!\n");
+						restart(session);
+					} else {
+						pthread_detach(thread_id);
+					}
+				}
+			}
+		}
+	}
 	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }

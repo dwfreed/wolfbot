@@ -4,11 +4,12 @@ bot:
 	server = "localhost";
 	port = 6667;
 	nick = "TheAllSeeingEye";
+	password = "mypassword";
 	name = "TheAllSeeingEye";
 	user = "TheAllSeeI";
 	user_mode = "+BpTx";
-	owner = "belak";
-	ops = [ "dwfreed", "jsvana", "Thirtysixway" ];
+	owner = "dwfreed";
+	ops = [ "belak", "jsvana", "Thirtysixway" ];
 	auth_plugin = "unreal32/anope185";
 	channel:
 	{

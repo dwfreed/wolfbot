@@ -18,16 +18,16 @@ ${PROG}: ${OBJS}
 	@echo "Building $@"
 	@${CC} -o $@ ${OBJS} ${LDFLAGS}
 
-global.h: callbacks.h threaded_functions.h game.h util.h conf.h auth.h
+global.h: lib/libircclient.a callbacks.h threaded_functions.h game.h util.h conf.h auth.h
 
 lib/libircclient.a: Makefile 
 	@${MAKE} -C libircclient/src DESTDIR=${PWD} install
 
-%.o: %.c Makefile lib/libircclient.a global.h
+%.o: %.c Makefile global.h
 	@echo "Compiling $<"
 	@${CC} ${CFLAGS} -c $< -o $@
 
-%.i: %.c Makefile lib/libircclient.a global.h
+%.i: %.c Makefile global.h
 	@echo "Prepocessing $<"
 	@${CC} ${CFLAGS} -E $< -o $@
 
