@@ -165,6 +165,43 @@ void *upgrade(void *args){
 void *rehash(void *args){
 	irc_session_t *session = (irc_session_t *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
+	char *old_game_log_path = NULL;
+	if( (old_game_log_path = config_get_string(context->config, "bot.log.game")) ){
+		old_game_log_path = strdup(old_game_log_path);
+	}
+	char *old_qa_log_path = NULL;
+	if( (old_qa_log_path = config_get_string(context->config, "bot.log.qa")) ){
+		old_qa_log_path = strdup(old_qa_log_path);
+	}
+	if( load_config(context->config) ){
+		irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "Configuration reloaded successfully!");
+		if( strcmp(old_game_log_path, config_get_string(context->config, "bot.log.game")) ){
+			free(old_game_log_path);
+			char gamelogopenclose[36];
+			time_t gamelogopenclosetime = time(NULL);
+			strftime(gamelogopenclose, 36, "--- Log closed %Y-%m-%d %H:%M:%S\n", localtime(&gamelogopenclosetime));
+			fprintf(context->game_data.game_log, gamelogopenclose, NULL);
+			char *game_log_path = tilde_expansion(config_get_string(context->config, "bot.log.game"));
+			freopen(game_log_path, "a", context->game_data.game_log);
+			g_free(game_log_path);
+			strftime(gamelogopenclose, 36, "--- Log opened %Y-%m-%d %H:%M:%S\n", localtime(&gamelogopenclosetime));
+			fprintf(context->game_data.game_log, gamelogopenclose, NULL);
+		}
+		if( strcmp(old_qa_log_path, config_get_string(context->config, "bot.log.qa")) ){
+			free(old_qa_log_path);
+			char qalogopenclose[36];
+			time_t qalogopenclosetime = time(NULL);
+			strftime(qalogopenclose, 36, "--- Log closed %Y-%m-%d %H:%M:%S\n", localtime(&qalogopenclosetime));
+			fprintf(context->game_data.qa_log, qalogopenclose, NULL);
+			char *qa_log_path = tilde_expansion(config_get_string(context->config, "bot.log.qa"));
+			freopen(qa_log_path, "a", context->game_data.qa_log);
+			g_free(qa_log_path);
+			strftime(qalogopenclose, 36, "--- Log opened %Y-%m-%d %H:%M:%S\n", localtime(&qalogopenclosetime));
+			fprintf(context->game_data.qa_log, qalogopenclose, NULL);
+		}
+	} else {
+		irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "Configuration reload failed!");
+	}
 	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
 }

@@ -3,11 +3,9 @@
 #include <glib.h>
 #include <libconfig.h>
 #include <pthread.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/time.h>
 #include <sys/resource.h>
 #include <time.h>
 #include <unistd.h>
