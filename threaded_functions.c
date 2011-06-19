@@ -54,6 +54,9 @@ void *threaded_join(void *args){
 		irc_cmd_channel_mode(struct_args->session, config_get_string(context->config, "bot.channel.channel"), config_get_string(context->config, "bot.channel.mode_on_enter"));
 		irc_cmd_msg(struct_args->session, config_get_string(context->config, "bot.channel.channel"), "I'm here now.  Let's get this started!");
 		irc_cmd_msg(struct_args->session, config_get_string(context->config, "bot.channel.channel"), "To join the game, say \2.join\2.  To start the game at least 60 seconds after the first person joins, say \2.start\2.  To increase the minimum wait time after the first person joins, say \2.wait\2.  \2.wait\2 is limited to \0022\2 uses per game.");
+		irc_send_raw(struct_args->session, "WHO %s", config_get_string(context->config, "bot.channel.channel"));
+	} else if( !strcmp(config_get_string(context->config, "bot.channel.channel"), struct_args->params[0]) ){
+		irc_send_raw(struct_args->session, "WHO %s", struct_args->origin);
 	}
 	free(struct_args->origin);
 	unsigned int i = 0;
@@ -117,7 +120,47 @@ void *threaded_numeric(void *args){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	int (*numeric_fcn)(struct func_args *) = (int (*)(struct func_args *))dlsym(context->auth_library, "numeric");
 	if( !numeric_fcn(struct_args) ){
-		
+		switch( struct_args->event ){
+			case 352:;
+				int go_on = TRUE;
+				char *autovoice_nick;
+				if( (autovoice_nick = config_get_string(context->config, "bot.autovoice.nick")) ){
+					if( strcmp(autovoice_nick, struct_args->params[5]) ){
+						go_on = FALSE;
+					}
+				}
+				if( go_on ){
+					char *autovoice_username;
+					if( *struct_args->params[2] == '~' ){
+						if( (autovoice_username = config_get_string(context->config, "bot.autovoice.username")) ){
+							if( strcmp(autovoice_username, struct_args->params[2] + 1) ){
+								go_on = FALSE;
+							}
+						}
+					} else {
+						if( (autovoice_username = config_get_string(context->config, "bot.autovoice.username")) ){
+							if( strcmp(autovoice_username, struct_args->params[2]) ){
+								go_on = FALSE;
+							}
+						}	
+					}
+					if( go_on ){
+						char *autovoice_hostname = config_get_string(context->config, "bot.autovoice.hostname");
+						char *autovoice_ipaddress = config_get_string(context->config, "bot.autovoice.ip_address");
+						if( autovoice_hostname || autovoice_ipaddress ){
+							if( strcmp(autovoice_hostname, struct_args->params[3]) && strcmp(autovoice_ipaddress, struct_args->params[3]) ){
+								go_on = FALSE;
+							}
+						}
+						if( go_on ){
+							char *voice_command = g_strdup_printf("+v %s", struct_args->params[5]);
+							irc_cmd_channel_mode(struct_args->session, config_get_string(context->config, "bot.channel.channel"), voice_command);
+							g_free(voice_command);
+						}
+					}
+				}
+				break;
+		}
 	}
 	free(struct_args->origin);
 	unsigned int i = 0;
