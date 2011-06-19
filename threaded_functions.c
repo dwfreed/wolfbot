@@ -33,6 +33,14 @@ void *threaded_connect(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	irc_cmd_user_mode(struct_args->session, config_get_string(context->config, "bot.user_mode"));
+	char ** part_channels;
+	int part_channels_size;
+	if( (part_channels = (char **)config_get_array(context->config, "bot.channel.part_channels", NULL, &part_channels_size)) ){
+		int i;
+		for( i = 0; i < part_channels_size; ++i ){
+			irc_cmd_part(struct_args->session, part_channels[i]);
+		}
+	}
 	irc_cmd_join(struct_args->session, config_get_string(context->config, "bot.channel.channel"), NULL);
 	free(struct_args);
 	g_atomic_int_add(&context->thread_count, -1);

@@ -14,6 +14,7 @@ bot:
 	channel:
 	{
 		channel = "#wolfgame";
+		part_channels = [ ];
 		//mode_on_enter = "+N";
 		//channel_mode_on_leave = "-N";
 		mode_on_start = "+m";
