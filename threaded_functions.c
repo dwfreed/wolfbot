@@ -42,10 +42,10 @@ void *threaded_connect(void *args){
 void *threaded_join(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
-	if( !strcmp(config_get_string(context->config, "bot.nick"), struct_args->origin) ){
-		irc_cmd_channel_mode(struct_args->session, struct_args->params[0], config_get_string(context->config, "bot.channel.mode_on_enter"));
-		irc_cmd_msg(struct_args->session, struct_args->params[0], "I'm here now.  Let's get this started!");
-		irc_cmd_msg(struct_args->session, struct_args->params[0], "To join the game, say \2.join\2.  To start the game at least 60 seconds after the first person joins, say \2.start\2.  To increase the minimum wait time after the first person joins, say \2.wait\2.  \2.wait\2 is limited to \0022\2 uses per game.");
+	if( !strcmp(config_get_string(context->config, "bot.channel.channel"), struct_args->params[0]) && !strcmp(config_get_string(context->config, "bot.nick"), struct_args->origin) ){
+		irc_cmd_channel_mode(struct_args->session, config_get_string(context->config, "bot.channel.channel"), config_get_string(context->config, "bot.channel.mode_on_enter"));
+		irc_cmd_msg(struct_args->session, config_get_string(context->config, "bot.channel.channel"), "I'm here now.  Let's get this started!");
+		irc_cmd_msg(struct_args->session, config_get_string(context->config, "bot.channel.channel"), "To join the game, say \2.join\2.  To start the game at least 60 seconds after the first person joins, say \2.start\2.  To increase the minimum wait time after the first person joins, say \2.wait\2.  \2.wait\2 is limited to \0022\2 uses per game.");
 	}
 	free(struct_args->origin);
 	unsigned int i = 0;
