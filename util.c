@@ -4,11 +4,12 @@ int strcmp_data(const void *a, const void *b, void *data __attribute__((__unused
 	return strcmp((char *)a, (char *)b);
 }
 
-char *tilde_expansion(char *path){
+char *path_expansion(char *path){
 	char *new_path;
-	if( *path == '~' ){
-		char *home = getenv("HOME");
-		new_path = g_strdup_printf("%s%s", home, path + 1);
+	wordexp_t expanded_form;
+	if( !wordexp(path, &expanded_form, WRDE_SHOWERR) ){
+		new_path = g_strdup(expanded_form.we_wordv[0]);
+		wordfree(&expanded_form);
 	} else {
 		new_path = g_strdup(path);
 	}
@@ -181,7 +182,7 @@ void *rehash(void *args){
 			time_t gamelogopenclosetime = time(NULL);
 			strftime(gamelogopenclose, 36, "--- Log closed %Y-%m-%d %H:%M:%S\n", localtime(&gamelogopenclosetime));
 			fprintf(context->game_data.game_log, gamelogopenclose, NULL);
-			char *game_log_path = tilde_expansion(config_get_string(context->config, "bot.log.game"));
+			char *game_log_path = path_expansion(config_get_string(context->config, "bot.log.game"));
 			freopen(game_log_path, "a", context->game_data.game_log);
 			g_free(game_log_path);
 			strftime(gamelogopenclose, 36, "--- Log opened %Y-%m-%d %H:%M:%S\n", localtime(&gamelogopenclosetime));
@@ -193,7 +194,7 @@ void *rehash(void *args){
 			time_t qalogopenclosetime = time(NULL);
 			strftime(qalogopenclose, 36, "--- Log closed %Y-%m-%d %H:%M:%S\n", localtime(&qalogopenclosetime));
 			fprintf(context->game_data.qa_log, qalogopenclose, NULL);
-			char *qa_log_path = tilde_expansion(config_get_string(context->config, "bot.log.qa"));
+			char *qa_log_path = path_expansion(config_get_string(context->config, "bot.log.qa"));
 			freopen(qa_log_path, "a", context->game_data.qa_log);
 			g_free(qa_log_path);
 			strftime(qalogopenclose, 36, "--- Log opened %Y-%m-%d %H:%M:%S\n", localtime(&qalogopenclosetime));

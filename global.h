@@ -9,6 +9,7 @@
 #include <sys/resource.h>
 #include <time.h>
 #include <unistd.h>
+#include <wordexp.h>
 #include "libircclient.h"
 #include "callbacks.h"
 #include "conf.h"

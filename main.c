@@ -59,7 +59,7 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	context->game_data.random_source = fopen("/dev/urandom", "r");
 	char *game_log_path;
 	if( (game_log_path = config_get_string(context->config, "bot.log.game")) ){
-		game_log_path = tilde_expansion(game_log_path);
+		game_log_path = path_expansion(game_log_path);
 		context->game_data.game_log = fopen(game_log_path, "a");
 		g_free(game_log_path);
 		char gamelogopenclose[36];
@@ -69,7 +69,7 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	};
 	char *qa_log_path;
 	if( (qa_log_path = config_get_string(context->config, "bot.log.qa")) ){
-		qa_log_path = tilde_expansion(qa_log_path);
+		qa_log_path = path_expansion(qa_log_path);
 		context->game_data.qa_log = fopen(qa_log_path, "a");
 		g_free(qa_log_path);
 		char qalogopenclose[36];
