@@ -276,12 +276,8 @@ int irc_run (irc_session_t * session)
 
 	while ( irc_is_connected(session) )
 	{
-		struct timeval tv;
 		fd_set in_set, out_set;
 		int maxfd = 0;
-
-		tv.tv_usec = 250000;
-		tv.tv_sec = 0;
 
 		// Init sets
 		FD_ZERO (&in_set);
@@ -289,7 +285,7 @@ int irc_run (irc_session_t * session)
 
 		irc_add_select_descriptors (session, &in_set, &out_set, &maxfd);
 
-		if ( select (maxfd + 1, &in_set, &out_set, 0, &tv) < 0 )
+		if ( select (maxfd + 1, &in_set, &out_set, 0, NULL) < 0 )
 		{
 			if ( socket_error() == EINTR )
 				continue;
