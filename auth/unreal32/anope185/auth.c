@@ -128,9 +128,9 @@ int numeric(struct func_args *args){
 					if( i != ops_size ){
 						ret_val = 1;
 						g_queue_foreach(commands, call_command, args->session);
+						g_queue_foreach(commands, queue_cleanup, NULL);
+						g_hash_table_remove(context->commands, args->params[1]);
 					}
-					g_queue_foreach(commands, queue_cleanup, NULL);
-					g_hash_table_remove(context->commands, args->params[1]);
 				}
 				g_mutex_unlock(context->commands_mutex);
 			}
@@ -147,7 +147,6 @@ int numeric(struct func_args *args){
 							case '@':
 								ret_val = 1;
 								g_queue_foreach(commands, call_command, args->session);
-							default:
 								g_queue_foreach(commands, queue_cleanup, NULL);
 								g_hash_table_remove(context->commands, args->params[1]);
 								break;
