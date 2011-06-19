@@ -92,7 +92,7 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	if( config_get_int(context->config, "bot.ipv6") ){
 		irc_connect6(session, config_get_string(context->config, "bot.server"), config_get_int(context->config, "bot.port"), config_get_string(context->config, "bot.password"), config_get_string(context->config, "bot.nick"), config_get_string(context->config, "bot.user"), config_get_string(context->config, "bot.name"));
 	} else {
-		irc_connect6(session, config_get_string(context->config, "bot.server"), config_get_int(context->config, "bot.port"), config_get_string(context->config, "bot.password"), config_get_string(context->config, "bot.nick"), config_get_string(context->config, "bot.user"), config_get_string(context->config, "bot.name"));
+		irc_connect(session, config_get_string(context->config, "bot.server"), config_get_int(context->config, "bot.port"), config_get_string(context->config, "bot.password"), config_get_string(context->config, "bot.nick"), config_get_string(context->config, "bot.user"), config_get_string(context->config, "bot.name"));
 	}
 	irc_run(session);
 	sleep(1);
