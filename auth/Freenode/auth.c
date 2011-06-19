@@ -80,6 +80,7 @@ static void call_command(void *data, void *user_data){
 				}
 			} else {
 				irc_send_raw(session, command);
+				g_atomic_int_add(&context->thread_count, -1);
 			}
 		}
 	}

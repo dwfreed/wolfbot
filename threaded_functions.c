@@ -16,6 +16,21 @@ void *threaded_channel(void *args){
 	} else if( !strcmp(message_parts[0], ".rehash") ){
 		void (*check_auth_fcn)(irc_session_t *, char *, char *) = (void (*)(irc_session_t *, char *, char *))dlsym(context->auth_library, "check_auth");
 		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
+	} else if( !strcmp(message_parts[0], ".raw") ){
+		if( message_parts[1] ){
+			char *command = g_strdup(message_parts[1]);
+			int i;
+			for( i = 2; message_parts[i]; ++i ){
+				char *old_command = command;
+				command = g_strdup_printf("%s %s", command, message_parts[i]);
+				g_free(old_command);
+			}
+			void (*check_auth_fcn)(irc_session_t *, char *, char *) = (void (*)(irc_session_t *, char *, char *))dlsym(context->auth_library, "check_auth");
+			check_auth_fcn(struct_args->session, struct_args->origin, command);
+			g_free(command);
+		} else {
+			irc_cmd_notice(struct_args->session, struct_args->origin, ".raw requires at least 1 parameter");
+		}
 	}
 	g_strfreev(message_parts);
 	free(struct_args->origin);

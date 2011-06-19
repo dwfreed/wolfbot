@@ -1,3 +1,5 @@
 Copy wolfbot.conf.example to wolfbot.conf and modify to suit.  The log settings support POSIX shell-like parameter expansion.
 
 Do NOT change bot.channel.channel and expect the bot to work after rehashing.  It will only work if you can force the bot to part the old channel and join the new one.
+
+Do NOT use printf sequences (%*) with .raw.  They may cause segmentation faults.
