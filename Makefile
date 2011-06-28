@@ -7,8 +7,8 @@ OBJS = callbacks.o threaded_functions.o game.o util.o conf.o main.o
 LIBS = glib-2.0 gthread-2.0 libconfig
 
 CC = gcc -ggdb -Wall -Werror
-CFLAGS = -I${PWD}/include -DWOLFBOT_VERSION='"$(shell hg id -n)"' $(shell pkg-config --cflags ${LIBS})
-LDFLAGS = -L${PWD}/lib $(shell pkg-config --libs ${LIBS}) -lircclient -lm -ldl -rdynamic
+CFLAGS = -I${PWD}/libircclient -DWOLFBOT_VERSION='"$(shell hg id -n)"' $(shell pkg-config --cflags ${LIBS})
+LDFLAGS = -L${PWD}/libircclient $(shell pkg-config --libs ${LIBS}) -lircclient -lm -ldl -rdynamic
 
 all: ${PROG} auth
 
@@ -20,8 +20,8 @@ ${PROG}: ${OBJS}
 
 global.h: lib/libircclient.a callbacks.h threaded_functions.h game.h util.h conf.h auth.h
 
-lib/libircclient.a: Makefile 
-	@${MAKE} -C libircclient/src DESTDIR=${PWD} install
+libircclient:
+	@${MAKE} -C libircclient DEBUG=1
 
 %.o: %.c Makefile global.h
 	@echo "Compiling $<"
@@ -48,4 +48,4 @@ leakcheck: ${PROG}
 	@echo "Leak-checking ${PROG}"
 	@G_SLICE="always-malloc" valgrind --leak-check=full --track-fds=yes --show-reachable=yes --track-origins=yes ./${PROG}
 
-.PHONY: all auth run clean leakcheck
+.PHONY: all auth libircclient run clean leakcheck
