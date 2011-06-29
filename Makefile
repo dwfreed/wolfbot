@@ -18,7 +18,7 @@ ${PROG}: ${OBJS}
 	@echo "Building $@"
 	@${CC} -o $@ ${OBJS} ${LDFLAGS}
 
-global.h: lib/libircclient.a callbacks.h threaded_functions.h game.h util.h conf.h auth.h
+global.h: libircclient callbacks.h threaded_functions.h game.h util.h conf.h auth.h
 
 libircclient:
 	@${MAKE} -C libircclient DEBUG=1
