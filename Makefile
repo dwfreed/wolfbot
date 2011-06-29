@@ -42,7 +42,7 @@ run: ${PROG}
 clean:
 	@echo "Cleaning ${PROG}"
 	@rm -f ${PROG} ${OBJS} $(wildcard auth/*/auth.so auth/*/*/auth.so)
-	@${MAKE} -C libircclient/src DESTDIR=${PWD} clean uninstall
+	@${MAKE} -C libircclient clean
 
 leakcheck: ${PROG}
 	@echo "Leak-checking ${PROG}"
