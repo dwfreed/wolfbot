@@ -7,8 +7,8 @@ OBJS = callbacks.o threaded_functions.o game.o util.o conf.o main.o
 LIBS = glib-2.0 gthread-2.0 libconfig
 
 CC = gcc -ggdb -Wall -Werror
-CFLAGS = -I${PWD}/libircclient -DWOLFBOT_VERSION='"$(shell hg id -n)"' $(shell pkg-config --cflags ${LIBS})
-LDFLAGS = -L${PWD}/libircclient $(shell pkg-config --libs ${LIBS}) -lircclient -lm -ldl -rdynamic
+CFLAGS = -I${CURDIR}/libircclient -DWOLFBOT_VERSION='"$(shell hg id -n)"' $(shell pkg-config --cflags ${LIBS})
+LDFLAGS = -Wl,-rpath,${CURDIR}/libircclient -L${CURDIR}/libircclient $(shell pkg-config --libs ${LIBS}) -lircclient -lm -ldl -rdynamic
 
 all: ${PROG} auth
 
@@ -33,7 +33,7 @@ libircclient:
 
 %.so: %.c Makefile global.h
 	@echo "Compiling $<"
-	@${CC} -I${PWD} ${CFLAGS} -shared -nostartfiles -nostdlib -fPIC $< -o $@
+	@${CC} -I${CURDIR} ${CFLAGS} -shared -nostartfiles -nostdlib -fPIC $< -o $@
 
 run: ${PROG}
 	@echo "Running ${PROG}"
