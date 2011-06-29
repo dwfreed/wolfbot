@@ -29,7 +29,7 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	getrlimit(RLIMIT_STACK, &limits);
 	limits.rlim_cur = limits.rlim_max;
 	setrlimit(RLIMIT_STACK, &limits);
-	irc_callbacks_t *callbacks = (irc_callbacks_t *)calloc(1, sizeof(irc_callbacks_t));
+	struct irc_callbacks *callbacks = (struct irc_callbacks *)calloc(1, sizeof(struct irc_callbacks));
 	callbacks->event_channel = event_channel;
 	callbacks->event_connect = event_connect;
 	callbacks->event_ctcp_req = event_ctcp_req;
@@ -41,10 +41,10 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	callbacks->event_part = event_part;
 	callbacks->event_privmsg = event_privmsg;
 	callbacks->event_quit = event_quit;
-	irc_session_t *session;
+	struct irc_session *session;
 	session = irc_create_session(callbacks);
 	free(callbacks);
-	irc_option_set(session, LIBIRC_OPTION_STRIPNICKS);
+	irc_option_set(session, LIBIRCCLIENT_OPTION_STRIPNICKS);
 	g_thread_init(NULL);
 	struct irc_ctx_t *context = (struct irc_ctx_t *)calloc(1, sizeof(struct irc_ctx_t));
 	context->config = g_hash_table_new_full(g_str_hash, g_str_equal, free, config_free);

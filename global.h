@@ -18,7 +18,7 @@
 #include "util.h"
 
 struct func_args {
-	irc_session_t *session;
+	struct irc_session *session;
 	unsigned int event;
 	char *origin;
 	char **params;
@@ -65,6 +65,6 @@ struct config_entry {
 };
 
 struct timer_callback_params {
-	irc_session_t *session;
+	struct irc_session *session;
 	timer_t timer;
 };

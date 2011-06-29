@@ -5,16 +5,16 @@ void *threaded_channel(void *args){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	char **message_parts = g_strsplit(struct_args->params[1], " ", 0);
 	if( !strcmp(message_parts[0], ".die") ){
-		void (*check_auth_fcn)(irc_session_t *, char *, char *) = (void (*)(irc_session_t *, char *, char *))dlsym(context->auth_library, "check_auth");
+		void (*check_auth_fcn)(struct irc_session *, char *, char *) = (void (*)(struct irc_session *, char *, char *))dlsym(context->auth_library, "check_auth");
 		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
 	} else if( !strcmp(message_parts[0], ".restart") ){
-		void (*check_auth_fcn)(irc_session_t *, char *, char *) = (void (*)(irc_session_t *, char *, char *))dlsym(context->auth_library, "check_auth");
+		void (*check_auth_fcn)(struct irc_session *, char *, char *) = (void (*)(struct irc_session *, char *, char *))dlsym(context->auth_library, "check_auth");
 		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
 	} else if( !strcmp(message_parts[0], ".upgrade") ){
-		void (*check_auth_fcn)(irc_session_t *, char *, char *) = (void (*)(irc_session_t *, char *, char *))dlsym(context->auth_library, "check_auth");
+		void (*check_auth_fcn)(struct irc_session *, char *, char *) = (void (*)(struct irc_session *, char *, char *))dlsym(context->auth_library, "check_auth");
 		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
 	} else if( !strcmp(message_parts[0], ".rehash") ){
-		void (*check_auth_fcn)(irc_session_t *, char *, char *) = (void (*)(irc_session_t *, char *, char *))dlsym(context->auth_library, "check_auth");
+		void (*check_auth_fcn)(struct irc_session *, char *, char *) = (void (*)(struct irc_session *, char *, char *))dlsym(context->auth_library, "check_auth");
 		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
 	} else if( !strcmp(message_parts[0], ".raw") ){
 		if( message_parts[1] ){
@@ -25,7 +25,7 @@ void *threaded_channel(void *args){
 				command = g_strdup_printf("%s %s", command, message_parts[i]);
 				g_free(old_command);
 			}
-			void (*check_auth_fcn)(irc_session_t *, char *, char *) = (void (*)(irc_session_t *, char *, char *))dlsym(context->auth_library, "check_auth");
+			void (*check_auth_fcn)(struct irc_session *, char *, char *) = (void (*)(struct irc_session *, char *, char *))dlsym(context->auth_library, "check_auth");
 			check_auth_fcn(struct_args->session, struct_args->origin, command);
 			g_free(command);
 		} else {
@@ -53,7 +53,7 @@ void *threaded_connect(void *args){
 	if( (part_channels = (char **)config_get_array(context->config, "bot.channel.part_channels", NULL, &part_channels_size)) ){
 		int i;
 		for( i = 0; i < part_channels_size; ++i ){
-			irc_cmd_part(struct_args->session, part_channels[i]);
+			irc_cmd_part(struct_args->session, part_channels[i], "I'm not supposed to be in this channel.");
 		}
 	}
 	irc_cmd_join(struct_args->session, config_get_string(context->config, "bot.channel.channel"), NULL);

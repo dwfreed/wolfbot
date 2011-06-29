@@ -23,7 +23,7 @@ void auth_fini(struct irc_ctx_t *context){
 	g_mutex_free(context->commands_mutex);
 }
 
-void check_auth(irc_session_t *session, char *nick, char *command){
+void check_auth(struct irc_session *session, char *nick, char *command){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	g_mutex_lock(context->commands_mutex);
 	GQueue *commands;
@@ -40,7 +40,7 @@ void check_auth(irc_session_t *session, char *nick, char *command){
 
 static void call_command(void *data, void *user_data){
 	char *command = (char *)data;
-	irc_session_t *session = (irc_session_t *)user_data;
+	struct irc_session *session = (struct irc_session *)user_data;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	if( g_mutex_trylock(context->thread_mutex) ){
 		g_mutex_unlock(context->thread_mutex);

@@ -43,7 +43,7 @@ static void die_timer_callback(union sigval args){
 }
 
 void *die(void *args){
-	irc_session_t *session = (irc_session_t *)args;
+	struct irc_session *session = (struct irc_session *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "Die, die, die!");
 	context->restart = FALSE;
@@ -98,7 +98,7 @@ static void restart_timer_callback(union sigval args){
 }
 
 void *restart(void *args){
-	irc_session_t *session = (irc_session_t *)args;
+	struct irc_session *session = (struct irc_session *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	irc_cmd_msg(session, config_get_string(context->config, "bot.channel.channel"), "Preparing to restart");
 	context->restart = TRUE;
@@ -127,7 +127,7 @@ void *restart(void *args){
 }
 
 void *upgrade(void *args){
-	irc_session_t *session = (irc_session_t *)args;
+	struct irc_session *session = (struct irc_session *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	int hg_ret_val = system("hg in --bundle incoming.bundle");
 	if( WEXITSTATUS(hg_ret_val) == 0 ){
@@ -164,7 +164,7 @@ void *upgrade(void *args){
 }
 
 void *rehash(void *args){
-	irc_session_t *session = (irc_session_t *)args;
+	struct irc_session *session = (struct irc_session *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	char *old_game_log_path = NULL;
 	if( (old_game_log_path = config_get_string(context->config, "bot.log.game")) ){

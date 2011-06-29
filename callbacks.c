@@ -1,6 +1,6 @@
 #include "global.h"
 
-void event_channel(irc_session_t *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
+void event_channel(struct irc_session *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	if( g_mutex_trylock(context->thread_mutex) ){
 		g_mutex_unlock(context->thread_mutex);
@@ -26,7 +26,7 @@ void event_channel(irc_session_t *session, const char *event __attribute__((__un
 	}
 }
 
-void event_connect(irc_session_t *session, const char *event __attribute__((__unused__)), const char *origin __attribute__((__unused__)), const char **params __attribute__((__unused__)), unsigned int count __attribute__((__unused__))){
+void event_connect(struct irc_session *session, const char *event __attribute__((__unused__)), const char *origin __attribute__((__unused__)), const char **params __attribute__((__unused__)), unsigned int count __attribute__((__unused__))){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	if( g_mutex_trylock(context->thread_mutex) ){
 		g_mutex_unlock(context->thread_mutex);
@@ -45,11 +45,11 @@ void event_connect(irc_session_t *session, const char *event __attribute__((__un
 	}
 }
 
-void event_ctcp_req(irc_session_t *session __attribute__((__unused__)), const char *event __attribute__((__unused__)), const char *origin __attribute__((__unused__)), const char **params __attribute__((__unused__)), unsigned int count __attribute__((__unused__))){
+void event_ctcp_req(struct irc_session *session __attribute__((__unused__)), const char *event __attribute__((__unused__)), const char *origin __attribute__((__unused__)), const char **params __attribute__((__unused__)), unsigned int count __attribute__((__unused__))){
 
 }
 
-void event_join(irc_session_t *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
+void event_join(struct irc_session *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	if( g_mutex_trylock(context->thread_mutex) ){
 		g_mutex_unlock(context->thread_mutex);
@@ -75,7 +75,7 @@ void event_join(irc_session_t *session, const char *event __attribute__((__unuse
 	}
 }
 
-void event_kick(irc_session_t *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
+void event_kick(struct irc_session *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	if( g_mutex_trylock(context->thread_mutex) ){
 		g_mutex_unlock(context->thread_mutex);
@@ -101,7 +101,7 @@ void event_kick(irc_session_t *session, const char *event __attribute__((__unuse
 	}
 }
 
-void event_nick(irc_session_t *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
+void event_nick(struct irc_session *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	if( g_mutex_trylock(context->thread_mutex) ){
 		g_mutex_unlock(context->thread_mutex);
@@ -127,7 +127,7 @@ void event_nick(irc_session_t *session, const char *event __attribute__((__unuse
 	}
 }
 
-void event_notice(irc_session_t *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
+void event_notice(struct irc_session *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	if( g_mutex_trylock(context->thread_mutex) ){
 		g_mutex_unlock(context->thread_mutex);
@@ -153,7 +153,7 @@ void event_notice(irc_session_t *session, const char *event __attribute__((__unu
 	}
 }
 
-void event_numeric(irc_session_t *session, unsigned int event, const char *origin, const char **params, unsigned int count){
+void event_numeric(struct irc_session *session, unsigned int event, const char *origin, const char **params, unsigned int count){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	if( g_mutex_trylock(context->thread_mutex) ){
 		g_mutex_unlock(context->thread_mutex);
@@ -180,7 +180,7 @@ void event_numeric(irc_session_t *session, unsigned int event, const char *origi
 	}
 }
 
-void event_part(irc_session_t *session, const char *event __attribute__((__unused__)), const char *origin, const char **params __attribute__((__unused__)), unsigned int count __attribute__((__unused__))){
+void event_part(struct irc_session *session, const char *event __attribute__((__unused__)), const char *origin, const char **params __attribute__((__unused__)), unsigned int count __attribute__((__unused__))){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	if( g_mutex_trylock(context->thread_mutex) ){
 		g_mutex_unlock(context->thread_mutex);
@@ -200,7 +200,7 @@ void event_part(irc_session_t *session, const char *event __attribute__((__unuse
 	}
 }
 
-void event_privmsg(irc_session_t *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
+void event_privmsg(struct irc_session *session, const char *event __attribute__((__unused__)), const char *origin, const char **params, unsigned int count){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	if( g_mutex_trylock(context->thread_mutex) ){
 		g_mutex_unlock(context->thread_mutex);
@@ -226,7 +226,7 @@ void event_privmsg(irc_session_t *session, const char *event __attribute__((__un
 	}
 }
 
-void event_quit(irc_session_t *session, const char *event __attribute__((__unused__)), const char *origin, const char **params __attribute__((__unused__)), unsigned int count __attribute__((__unused__))){
+void event_quit(struct irc_session *session, const char *event __attribute__((__unused__)), const char *origin, const char **params __attribute__((__unused__)), unsigned int count __attribute__((__unused__))){
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(session);
 	if( g_mutex_trylock(context->thread_mutex) ){
 		g_mutex_unlock(context->thread_mutex);
