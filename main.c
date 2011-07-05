@@ -45,6 +45,7 @@ int main(int argc __attribute__((__unused__)), char *argv[]){
 	session = irc_create_session(callbacks);
 	free(callbacks);
 	irc_option_set(session, LIBIRCCLIENT_OPTION_STRIPNICKS);
+	irc_option_set(session, LIBIRCCLIENT_OPTION_DEBUG);
 	g_thread_init(NULL);
 	struct irc_ctx_t *context = (struct irc_ctx_t *)calloc(1, sizeof(struct irc_ctx_t));
 	context->config = g_hash_table_new_full(g_str_hash, g_str_equal, free, config_free);
