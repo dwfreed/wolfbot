@@ -139,7 +139,7 @@ int numeric(struct func_args *args){
 		case 319:;
 			char **channels = g_strsplit(args->params[2], " ", 0);
 			for( i = 0; channels[i]; ++i){
-				if( !strcmp(channels[i] + 1, config_get_string(context->config, "bot.channel.channel")) ){
+				if( !strcmp(&channels[i][1], config_get_string(context->config, "bot.channel.channel")) ){
 					g_mutex_lock(context->commands_mutex);
 					if( (commands = g_hash_table_lookup(context->commands, args->params[1])) ){
 						if( channels[i][0] == '@' ){
