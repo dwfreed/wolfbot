@@ -46,6 +46,6 @@ clean:
 
 leakcheck: ${PROG}
 	@echo "Leak-checking ${PROG}"
-	@G_SLICE="always-malloc" valgrind --leak-check=full --track-fds=yes --show-reachable=yes --track-origins=yes ./${PROG}
+	@MALLOC_CHECK_=1 G_SLICE="all" G_DEBUG="gc-friendly" valgrind --leak-check=full --track-fds=yes --show-reachable=yes --track-origins=yes ./${PROG}
 
 .PHONY: all auth libircclient run clean leakcheck
