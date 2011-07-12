@@ -79,7 +79,7 @@ static void call_command(void *data, void *user_data){
 					pthread_detach(thread_id);
 				}
 			} else {
-				irc_send_raw(session, command);
+				irc_send_raw(session, command, NULL);
 				g_atomic_int_add(&context->thread_count, -1);
 			}
 		}
