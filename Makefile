@@ -6,7 +6,7 @@ OBJS = callbacks.o threaded_functions.o game.o util.o conf.o main.o
 
 LIBS = glib-2.0 gthread-2.0 libconfig
 
-CC = gcc -ggdb -Wall -Werror
+CC = gcc -ggdb -Wall -Werror -Wextra
 CFLAGS = -I${CURDIR}/libircclient -DWOLFBOT_VERSION='"$(shell hg id -n)"' $(shell pkg-config --cflags ${LIBS})
 LDFLAGS = -Wl,-rpath,${CURDIR}/libircclient -L${CURDIR}/libircclient $(shell pkg-config --libs ${LIBS}) -lircclient -lm -ldl -rdynamic
 
