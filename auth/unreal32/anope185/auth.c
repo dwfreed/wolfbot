@@ -86,11 +86,11 @@ static void call_command(void *data, void *user_data){
 	}
 }
 
-int notice(struct func_args *args __attribute__((__unused__))){
+int auth_notice(struct func_args *args __attribute__((__unused__))){
 	return 0;
 }
 
-int numeric(struct func_args *args){
+int auth_numeric(struct func_args *args){
 	int ret_val = 0;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(args->session);
 	GQueue *commands;
@@ -163,6 +163,6 @@ int numeric(struct func_args *args){
 	return ret_val;
 }
 
-int privmsg(struct func_args *args __attribute__((__unused__))){
+int auth_privmsg(struct func_args *args __attribute__((__unused__))){
 	return 0;
 }

@@ -117,7 +117,7 @@ void *threaded_nick(void *args){
 void *threaded_notice(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
-	int (*notice_fcn)(struct func_args *) = (int (*)(struct func_args *))dlsym(context->auth_library, "notice");
+	int (*notice_fcn)(struct func_args *) = (int (*)(struct func_args *))dlsym(context->auth_library, "auth_notice");
 	notice_fcn(struct_args);
 	free(struct_args->origin);
 	unsigned int i = 0;
@@ -133,7 +133,7 @@ void *threaded_notice(void *args){
 void *threaded_numeric(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
-	int (*numeric_fcn)(struct func_args *) = (int (*)(struct func_args *))dlsym(context->auth_library, "numeric");
+	int (*numeric_fcn)(struct func_args *) = (int (*)(struct func_args *))dlsym(context->auth_library, "auth_numeric");
 	if( !numeric_fcn(struct_args) ){
 		switch( struct_args->event ){
 			case 352:;
@@ -201,7 +201,7 @@ void *threaded_part(void *args){
 void *threaded_privmsg(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
-	int (*privmsg_fcn)(struct func_args *) = (int (*)(struct func_args *))dlsym(context->auth_library, "privmsg");
+	int (*privmsg_fcn)(struct func_args *) = (int (*)(struct func_args *))dlsym(context->auth_library, "auth_privmsg");
 	if( !privmsg_fcn(struct_args) ){
 		
 	}
