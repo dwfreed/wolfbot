@@ -32,6 +32,17 @@ bot: {
 	};
 };
 game: {
+	// These needn't be floats as they are converted in-code.
+	start: {
+		// Player count to start at (doesn't apply to wolves and seers, as there is always at least one of each)
+		village_drunks = 6;
+		cursed_villagers = 6;
+		harlots = 8;
+		gunmen = 10;
+		angels = 11;
+		traitors = 10;
+		detectives = 15;
+	};
 	rates: {
 		// 1 in n
 		wolves = 7; // rounded up
