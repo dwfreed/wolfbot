@@ -29,10 +29,10 @@ struct game_info {
 	FILE *game_log;
 	FILE *qa_log;
 	time_t min_start_time;
-	char can_start;
-	char is_pregame;
-	char is_running;
-	char is_night;
+	char can_start : 1;
+	char is_pregame : 1;
+	char is_running : 1;
+	char is_night : 1;
 	GHashTable *players;
 	GHashTable *hash_roles;
 	GTree *tree_roles;
