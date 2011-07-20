@@ -42,7 +42,7 @@ game: {
 		gunmen = 10; // rounded down
 		angels = 11; // rounded down
 		traitors = 10; // rounded down
-		detectives = 16; // rounded down
+		detectives = 15; // rounded down
 	};
 	roles: {
 		angels = true;
