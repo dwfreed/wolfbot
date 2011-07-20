@@ -39,14 +39,14 @@ game:
 {
 	rates:
 	{
-		wolves = 0.14;
-		seers = 0.14;
-		cursed_villagers = 0.16;
-		harlots = 0.12;
-		gunmen = 0.1;
-		angels = 0.09;
-		traitors = 0.1;
-		detectives = 0.06;
+		wolves = 0.14; // rounded up
+		seers = 0.14; // rounded up
+		cursed_villagers = 0.16; // rounded down
+		harlots = 0.12; // rounded down
+		gunmen = 0.1; // rounded down
+		angels = 0.09; // rounded down
+		traitors = 0.1; // rounded down
+		detectives = 0.06; // rounded down
 	};
 	roles:
 	{
