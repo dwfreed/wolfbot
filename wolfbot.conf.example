@@ -41,6 +41,7 @@ game:
 	{
 		wolves = 0.14; // rounded up
 		seers = 0.14; // rounded up
+		village_drunks = 0.16 // rounded down
 		cursed_villagers = 0.16; // rounded down
 		harlots = 0.12; // rounded down
 		gunmen = 0.1; // rounded down
