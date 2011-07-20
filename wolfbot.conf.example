@@ -1,5 +1,4 @@
-bot:
-{
+bot: {
 	ipv6 = true;
 	server = "localhost";
 	port = 6667;
@@ -11,8 +10,7 @@ bot:
 	owner = "dwfreed";
 	ops = [ "belak", "jsvana", "Thirtysixway" ];
 	auth_plugin = "unreal32/anope185";
-	channel:
-	{
+	channel: {
 		channel = "#wolfgame";
 		part_channels = [ ];
 		//mode_on_enter = "+N";
@@ -22,23 +20,19 @@ bot:
 		channel_mode_on_die = "+b ";
 		channel_mode_on_die_undo = "-b ";
 	};
-	autovoice:
-	{
+	autovoice: {
 		//nick = "CIA-"'
 		username = "CIA";
 		hostname = "cia.atheme.org";
 		ip_address = "204.152.223.100";
 	};
-	log:
-	{
+	log: {
 		game = "~/.WWW/wolfbot.log";
 		qa = "./qa.log";
 	};
 };
-game:
-{
-	rates:
-	{
+game: {
+	rates: {
 		// 1 in n
 		wolves = 7; // rounded up
 		seers = 7; // rounded up
@@ -50,8 +44,7 @@ game:
 		traitors = 10; // rounded down
 		detectives = 16; // rounded down
 	};
-	roles:
-	{
+	roles: {
 		angels = true;
 		cursed_villager = true;
 		traitors_and_detectives = true;
