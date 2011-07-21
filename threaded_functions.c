@@ -48,7 +48,7 @@ void *threaded_connect(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	irc_cmd_user_mode(struct_args->session, config_get_string(context->config, "bot.user_mode"));
-	char ** part_channels;
+	char **part_channels;
 	int part_channels_size;
 	if( (part_channels = (char **)config_get_array(context->config, "bot.channel.part_channels", NULL, &part_channels_size)) ){
 		int i;
@@ -57,6 +57,21 @@ void *threaded_connect(void *args){
 		}
 	}
 	irc_cmd_join(struct_args->session, config_get_string(context->config, "bot.channel.channel"), NULL);
+	char *channel = g_strdup_printf("%s-wolves", config_get_string(context->config, "bot.channel.channel"));
+	irc_cmd_join(struct_args->session, channel, NULL);
+	g_free(channel);
+	channel = g_strdup_printf("%s-seers", config_get_string(context->config, "bot.channel.channel"));
+	irc_cmd_join(struct_args->session, channel, NULL);
+	g_free(channel);
+	channel = g_strdup_printf("%s-harlots", config_get_string(context->config, "bot.channel.channel"));
+	irc_cmd_join(struct_args->session, channel, NULL);
+	g_free(channel);
+	channel = g_strdup_printf("%s-angels", config_get_string(context->config, "bot.channel.channel"));
+	irc_cmd_join(struct_args->session, channel, NULL);
+	g_free(channel);
+	channel = g_strdup_printf("%s-detectives", config_get_string(context->config, "bot.channel.channel"));
+	irc_cmd_join(struct_args->session, channel, NULL);
+	g_free(channel);
 	free(struct_args);
 	g_atomic_int_add(&context->thread_count, -1);
 	return NULL;
