@@ -4,19 +4,19 @@ void *threaded_channel(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
 	char **message_parts = g_strsplit(struct_args->params[1], " ", 0);
-	if( !strcmp(message_parts[0], ".die") ){
+	if( !strcasecmp(message_parts[0], ".die") ){
 		void (*check_auth_fcn)(struct irc_session *, char *, char *) = (void (*)(struct irc_session *, char *, char *))dlsym(context->auth_library, "check_auth");
 		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
-	} else if( !strcmp(message_parts[0], ".restart") ){
+	} else if( !strcasecmp(message_parts[0], ".restart") ){
 		void (*check_auth_fcn)(struct irc_session *, char *, char *) = (void (*)(struct irc_session *, char *, char *))dlsym(context->auth_library, "check_auth");
 		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
-	} else if( !strcmp(message_parts[0], ".upgrade") ){
+	} else if( !strcasecmp(message_parts[0], ".upgrade") ){
 		void (*check_auth_fcn)(struct irc_session *, char *, char *) = (void (*)(struct irc_session *, char *, char *))dlsym(context->auth_library, "check_auth");
 		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
-	} else if( !strcmp(message_parts[0], ".rehash") ){
+	} else if( !strcasecmp(message_parts[0], ".rehash") ){
 		void (*check_auth_fcn)(struct irc_session *, char *, char *) = (void (*)(struct irc_session *, char *, char *))dlsym(context->auth_library, "check_auth");
 		check_auth_fcn(struct_args->session, struct_args->origin, message_parts[0] + 1);
-	} else if( !strcmp(message_parts[0], ".raw") ){
+	} else if( !strcasecmp(message_parts[0], ".raw") ){
 		if( message_parts[1] ){
 			char *command = g_strdup(message_parts[1]);
 			int i;
@@ -80,12 +80,12 @@ void *threaded_connect(void *args){
 void *threaded_join(void *args){
 	struct func_args *struct_args = (struct func_args *)args;
 	struct irc_ctx_t *context = (struct irc_ctx_t *)irc_get_ctx(struct_args->session);
-	if( !strcmp(config_get_string(context->config, "bot.channel.channel"), struct_args->params[0]) && !strcmp(config_get_string(context->config, "bot.nick"), struct_args->origin) ){
+	if( !strcasecmp(config_get_string(context->config, "bot.channel.channel"), struct_args->params[0]) && !strcmp(config_get_string(context->config, "bot.nick"), struct_args->origin) ){
 		irc_cmd_channel_mode(struct_args->session, config_get_string(context->config, "bot.channel.channel"), config_get_string(context->config, "bot.channel.mode_on_enter"));
 		irc_cmd_msg(struct_args->session, config_get_string(context->config, "bot.channel.channel"), "I'm here now.  Let's get this started!");
 		irc_cmd_msg(struct_args->session, config_get_string(context->config, "bot.channel.channel"), "To join the game, say \2.join\2.  To start the game at least 60 seconds after the first person joins, say \2.start\2.  To increase the minimum wait time after the first person joins, say \2.wait\2.  \2.wait\2 is limited to \0022\2 uses per game.");
 		irc_send_raw(struct_args->session, "WHO %s", config_get_string(context->config, "bot.channel.channel"));
-	} else if( !strcmp(config_get_string(context->config, "bot.channel.channel"), struct_args->params[0]) ){
+	} else if( !strcasecmp(config_get_string(context->config, "bot.channel.channel"), struct_args->params[0]) ){
 		irc_send_raw(struct_args->session, "WHO %s", struct_args->origin);
 	}
 	free(struct_args->origin);
