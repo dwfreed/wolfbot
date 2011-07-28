@@ -178,8 +178,15 @@ void *threaded_numeric(void *args){
 						char *autovoice_hostname = config_get_string(context->config, "bot.autovoice.hostname");
 						char *autovoice_ipaddress = config_get_string(context->config, "bot.autovoice.ip_address");
 						if( autovoice_hostname || autovoice_ipaddress ){
-							if( strcmp(autovoice_hostname, struct_args->params[3]) && strcmp(autovoice_ipaddress, struct_args->params[3]) ){
-								go_on = FALSE;
+							if( autovoice_hostname ){
+								if( strcmp(autovoice_hostname, struct_args->params[3]) ){
+									go_on = FALSE;
+								}
+							}
+							if( autovoice_ipaddress ){
+								if( strcmp(autovoice_ipaddress, struct_args->params[3]) ){
+									go_on = FALSE;
+								}
 							}
 						}
 						if( go_on ){
